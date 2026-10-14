@@ -1,0 +1,1894 @@
+<!DOCTYPE html>
+<html lang="zh-MY">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>小学课堂评估记录系统 (PBD Transit Forms Year 1-6)</title>
+  
+  <!-- WebApp & Mobile Capable Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PBD评估系统">
+  <meta name="theme-color" content="#312e81">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- Tailwind CSS & Chart.js -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    * {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    body { 
+      font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+      background-color: #f8fafc; 
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* 防止 iOS 输入框聚焦时自动缩放页面 */
+    @media screen and (max-width: 768px) {
+      select, input, textarea {
+        font-size: 16px !important;
+      }
+    }
+
+    /* 粘性冻结列样式 (优化移动端阴影与层级) */
+    .sticky-col-1 { position: sticky; left: 0px; z-index: 20; background-color: white; min-width: 36px; width: 36px; }
+    .sticky-col-2 { position: sticky; left: 36px; z-index: 20; background-color: white; min-width: 42px; width: 42px; }
+    .sticky-col-3 { 
+      position: sticky; 
+      left: 78px; 
+      z-index: 20; 
+      background-color: white; 
+      min-width: 110px; 
+      max-width: 130px;
+      white-space: nowrap; 
+      box-shadow: 3px 0 6px -2px rgba(0, 0, 0, 0.08);
+    }
+
+    .tp-badge-1 { background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .tp-badge-2 { background-color: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+    .tp-badge-3 { background-color: #fefce8; color: #854d0e; border: 1px solid #fef08a; }
+    .tp-badge-4 { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .tp-badge-5 { background-color: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .tp-badge-6 { background-color: #faf5ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+
+    /* 手机端触摸友好型 Checkbox */
+    .touch-checkbox {
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body class="text-slate-800 pb-24 sm:pb-8">
+
+  <!-- Top Navigation Header -->
+  <header class="bg-indigo-900 text-white shadow-lg sticky top-0 z-40 pt-2 pb-2 sm:py-3">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center space-x-2.5">
+        <div id="nav-logo-container" class="w-9 h-9 sm:w-10 sm:h-10 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 overflow-hidden flex-shrink-0">
+          <i class="fa-solid fa-graduation-cap text-indigo-200 text-lg sm:text-xl" id="nav-logo-fallback"></i>
+          <img id="nav-logo-img" class="w-full h-full object-contain hidden" alt="School Logo" />
+        </div>
+        <div>
+          <h1 class="text-sm sm:text-lg font-bold tracking-wide leading-tight truncate max-w-[240px] sm:max-w-none" id="nav-school-name">SJK(C) KANG YAO PBD 评估系统</h1>
+          <p class="text-[11px] sm:text-xs text-indigo-200 truncate max-w-[240px] sm:max-w-none mt-0.5" id="nav-sub-info">科目: 科学 | 任课教师: LEE KIAT CHEW | 班级: 3M</p>
+        </div>
+      </div>
+
+      <!-- Desktop Navigation Tabs (Hidden on Mobile) -->
+      <div class="hidden md:flex items-center space-x-1 bg-indigo-950/60 p-1 rounded-xl border border-indigo-800/50 text-sm">
+        <button onclick="switchTab('transit')" id="tab-btn-transit" class="px-4 py-1.5 rounded-lg font-medium transition flex items-center gap-2 bg-indigo-600 text-white shadow">
+          <i class="fa-solid fa-table"></i> Borang Transit 记录表
+        </button>
+        <button onclick="switchTab('analytics')" id="tab-btn-analytics" class="px-4 py-1.5 rounded-lg font-medium transition flex items-center gap-2 text-indigo-200 hover:text-white hover:bg-indigo-800/50">
+          <i class="fa-solid fa-chart-pie"></i> 数据分析与干预建议
+        </button>
+        <button onclick="switchTab('students')" id="tab-btn-students" class="px-4 py-1.5 rounded-lg font-medium transition flex items-center gap-2 text-indigo-200 hover:text-white hover:bg-indigo-800/50">
+          <i class="fa-solid fa-users-gear"></i> 学生与班级设置
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Bottom Navigation Bar (App Experience) -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1.5 flex justify-around items-center shadow-lg pb-[calc(0.375rem+env(safe-area-inset-bottom))]">
+    <button onclick="switchTab('transit')" id="mob-tab-btn-transit" class="flex flex-col items-center justify-center w-1/3 py-1 text-indigo-600 font-bold transition">
+      <i class="fa-solid fa-table text-lg"></i>
+      <span class="text-[10px] mt-0.5">Transit 记录</span>
+    </button>
+    <button onclick="switchTab('analytics')" id="mob-tab-btn-analytics" class="flex flex-col items-center justify-center w-1/3 py-1 text-slate-500 font-medium transition">
+      <i class="fa-solid fa-chart-pie text-lg"></i>
+      <span class="text-[10px] mt-0.5">数据分析</span>
+    </button>
+    <button onclick="switchTab('students')" id="mob-tab-btn-students" class="flex flex-col items-center justify-center w-1/3 py-1 text-slate-500 font-medium transition">
+      <i class="fa-solid fa-users-gear text-lg"></i>
+      <span class="text-[10px] mt-0.5">设置管理</span>
+    </button>
+  </nav>
+
+  <!-- Main Content Area -->
+  <main class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 py-3 sm:py-6">
+
+    <!-- Global Controls Toolbar -->
+    <div class="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 p-3 sm:p-4 mb-4 sm:mb-6 space-y-3">
+      
+      <!-- Filters Group -->
+      <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3">
+        
+        <!-- Subject Selector -->
+        <div class="col-span-1">
+          <label class="block text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1"><i class="fa-solid fa-book text-indigo-600"></i> 选择科目</label>
+          <select id="subject-select" onchange="changeSubject(this.value)" class="w-full bg-indigo-50 border border-indigo-200 rounded-lg px-2 py-1.5 text-xs sm:text-sm font-bold text-indigo-900 focus:ring-2 focus:ring-indigo-500 truncate">
+            <option value="science" selected>科学 (Sains)</option>
+            <option value="math">数学 (Matematik)</option>
+          </select>
+        </div>
+
+        <!-- Grade Selector -->
+        <div class="col-span-1">
+          <label class="block text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">选择年级</label>
+          <select id="grade-select" onchange="changeGrade(this.value)" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs sm:text-sm font-bold text-indigo-900 focus:ring-2 focus:ring-indigo-500 truncate">
+            <option value="1">一年级 (Tahun 1)</option>
+            <option value="2">二年级 (Tahun 2)</option>
+            <option value="3">三年级 (Tahun 3)</option>
+            <option value="4">四年级 (Tahun 4)</option>
+            <option value="5">五年级 (Tahun 5)</option>
+            <option value="6">六年级 (Tahun 6)</option>
+          </select>
+        </div>
+
+        <!-- Unit Selector -->
+        <div id="unit-select-container" class="col-span-2 sm:flex-1 min-w-0">
+          <label class="block text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">评估单元 (UNIT)</label>
+          <select id="unit-select" onchange="renderTransitTable()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs sm:text-sm font-medium focus:ring-2 focus:ring-indigo-500 truncate" title="点击选择单元">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons & Backup Controls (Horizontal Scrollable on Mobile) -->
+      <div class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 pt-1 -mx-1 px-1">
+        <button onclick="openPopupPrintTransit()" class="whitespace-nowrap px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium shadow-sm transition flex items-center gap-1">
+          <i class="fa-solid fa-print"></i> 打印 Borang
+        </button>
+        <button onclick="openPopupPrintSlips()" class="whitespace-nowrap px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium shadow-sm transition flex items-center gap-1">
+          <i class="fa-solid fa-file-invoice"></i> 打印报告单
+        </button>
+        <button onclick="exportDataCSV()" class="whitespace-nowrap px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-1">
+          <i class="fa-solid fa-file-excel text-emerald-600"></i> 导出 CSV
+        </button>
+        
+        <!-- Backup & Restore Buttons -->
+        <button onclick="exportBackupJSON()" class="whitespace-nowrap px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-1" title="下载所有科目、班级和设置备份">
+          <i class="fa-solid fa-download text-indigo-600"></i> 导出备份
+        </button>
+        <button onclick="document.getElementById('backup-file-input').click()" class="whitespace-nowrap px-2 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-medium transition flex items-center gap-1" title="上传恢复已保存的 JSON 备份文档">
+          <i class="fa-solid fa-upload"></i> 恢复备份
+        </button>
+        <input type="file" id="backup-file-input" accept=".json" onchange="importBackupJSON(event)" class="hidden">
+      </div>
+    </div>
+
+    <!-- TAB 1: TRANSIT MATRIX (BORANG TRANSIT) -->
+    <div id="tab-content-transit" class="space-y-4 sm:space-y-6">
+      
+      <!-- Unit Summary Card & Batch Score Bar -->
+      <div class="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 p-3.5 sm:p-5 space-y-3">
+        <div>
+          <h2 class="text-base sm:text-xl font-bold text-slate-900 leading-tight" id="current-unit-title">加载中...</h2>
+          <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">勾选各学习标准 (SP) 或点击表头框批量勾选，右侧选择单元掌握级别 (TP1 - TP6)。</p>
+        </div>
+
+        <!-- Bulk Selection & Batch SP Actions -->
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 bg-slate-50 p-2 sm:p-2.5 rounded-xl border border-slate-200">
+          <span class="text-[11px] sm:text-xs font-semibold text-slate-500 pl-0.5"><i class="fa-solid fa-list-check"></i> 批量操作:</span>
+          
+          <button onclick="batchToggleAllSP(true)" class="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[11px] sm:text-xs rounded-lg font-medium transition flex items-center gap-1">
+            <i class="fa-solid fa-square-check text-indigo-600"></i> 全选 SP
+          </button>
+          <button onclick="batchToggleAllSP(false)" class="px-2 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 text-[11px] sm:text-xs rounded-lg font-medium transition flex items-center gap-1">
+            <i class="fa-regular fa-square"></i> 清空 SP
+          </button>
+
+          <span class="text-slate-300 hidden sm:inline">|</span>
+
+          <select id="batch-tp-select" class="text-xs border border-slate-300 rounded-lg px-1.5 py-1 font-medium bg-white">
+            <option value="">TP 级别...</option>
+            <option value="TP1">TP 1</option>
+            <option value="TP2">TP 2</option>
+            <option value="TP3">TP 3</option>
+            <option value="TP4">TP 4</option>
+            <option value="TP5">TP 5</option>
+            <option value="TP6">TP 6</option>
+          </select>
+          <button onclick="applyBatchTP()" class="px-2 py-1 bg-indigo-600 text-white text-[11px] sm:text-xs rounded-lg hover:bg-indigo-700 font-medium transition">应用 TP</button>
+          <button onclick="clearBatchScores()" class="px-2 py-1 bg-amber-100 text-amber-800 text-[11px] sm:text-xs rounded-lg hover:bg-amber-200 font-medium transition">清空成绩</button>
+          <button onclick="deleteBatchStudents()" class="px-2 py-1 bg-rose-100 text-rose-700 text-[11px] sm:text-xs rounded-lg hover:bg-rose-200 font-medium transition">删除选中</button>
+        </div>
+      </div>
+
+      <!-- Main Assessment Data Table (自适应屏幕 Fit) -->
+      <div class="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto custom-scrollbar -mr-0.5">
+          <table class="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 text-[11px] sm:text-xs uppercase tracking-wider">
+                <th class="p-2 sm:p-3 sticky-col-1 border-r border-slate-200 bg-slate-100 text-center">
+                  <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll(this.checked)" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                </th>
+                <th class="p-1.5 sm:p-3 sticky-col-2 border-r border-slate-200 bg-slate-100 font-bold text-center">序</th>
+                <th class="p-2 sm:p-3 sticky-col-3 border-r border-slate-200 bg-slate-100 font-bold">学生姓名</th>
+                
+                <!-- Dynamic SP Headers Container -->
+                <th id="sp-headers-container" class="p-0 border-r border-slate-200">
+                  <!-- Generated via JS -->
+                </th>
+
+                <th class="p-2 w-20 sm:w-24 min-w-[70px] sm:min-w-[85px] text-center font-bold bg-indigo-50 text-indigo-900 border-r border-slate-200 whitespace-nowrap">SP 掌握度</th>
+                <th class="p-2 w-24 sm:w-28 min-w-[85px] sm:min-w-[95px] text-center font-bold bg-amber-50 text-amber-900 border-r border-slate-200 whitespace-nowrap">单元总 TP</th>
+                <th class="p-2 w-12 sm:w-16 min-w-[45px] sm:min-w-[60px] text-center font-bold whitespace-nowrap">操作</th>
+              </tr>
+            </thead>
+            <tbody id="transit-table-body" class="divide-y divide-slate-200">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 2: DATA ANALYTICS PAGE -->
+    <div id="tab-content-analytics" class="space-y-4 sm:space-y-6 hidden">
+      <div class="bg-white rounded-xl sm:rounded-2xl border border-indigo-100 p-3.5 sm:p-4 shadow-sm flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-indigo-50/50 to-white">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 bg-indigo-600 text-white rounded-xl flex items-center justify-center font-bold text-base sm:text-lg">
+            <i class="fa-solid fa-filter"></i>
+          </div>
+          <div>
+            <label class="block text-[10px] sm:text-xs font-bold uppercase tracking-wider text-indigo-900">分析数据范围选择 (Scope)</label>
+            <select id="analytics-unit-select" onchange="renderAnalyticsPage()" class="mt-0.5 border border-indigo-200 rounded-lg px-2.5 py-1 text-xs sm:text-sm font-bold text-slate-800 bg-white focus:ring-2 focus:ring-indigo-500 max-w-[220px] sm:max-w-none truncate">
+              <option value="ALL">显示：全学期所有单元综合分析</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="analytics-scope-badge" class="px-2.5 py-1 bg-indigo-100 text-indigo-800 rounded-full text-[11px] sm:text-xs font-semibold">
+          当前视图：全学期综合汇总
+        </div>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        <div class="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider">评估涉及学生</p>
+            <h3 class="text-lg sm:text-2xl font-bold text-slate-800 mt-0.5" id="kpi-total-students">0</h3>
+          </div>
+          <div class="w-9 h-9 sm:w-12 sm:h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-base sm:text-xl">
+            <i class="fa-solid fa-users"></i>
+          </div>
+        </div>
+
+        <div class="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider">达标率 (TP3+)</p>
+            <h3 class="text-lg sm:text-2xl font-bold text-emerald-600 mt-0.5" id="kpi-pass-rate">0%</h3>
+          </div>
+          <div class="w-9 h-9 sm:w-12 sm:h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-base sm:text-xl">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+        </div>
+
+        <div class="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider">需辅导 (TP1-2)</p>
+            <h3 class="text-lg sm:text-2xl font-bold text-rose-600 mt-0.5" id="kpi-need-help">0 人</h3>
+          </div>
+          <div class="w-9 h-9 sm:w-12 sm:h-12 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center text-base sm:text-xl">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+        </div>
+
+        <div class="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider">平均掌握级别</p>
+            <h3 class="text-lg sm:text-2xl font-bold text-indigo-600 mt-0.5" id="kpi-avg-tp">TP 0.0</h3>
+          </div>
+          <div class="w-9 h-9 sm:w-12 sm:h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-base sm:text-xl">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div class="bg-white p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm">
+          <h3 class="text-sm sm:text-base font-bold text-slate-800 mb-3 flex items-center gap-2" id="chart-1-title">
+            <i class="fa-solid fa-chart-column text-indigo-600"></i> TP 等级总体分布图
+          </h3>
+          <div class="h-52 sm:h-64">
+            <canvas id="chart-tp-distribution"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm">
+          <h3 class="text-sm sm:text-base font-bold text-slate-800 mb-3 flex items-center gap-2" id="chart-2-title">
+            <i class="fa-solid fa-chart-bar text-emerald-600"></i> 各单元平均 TP 掌握度对比
+          </h3>
+          <div class="h-52 sm:h-64">
+            <canvas id="chart-unit-comparison"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Intervention Section -->
+      <div class="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <div class="flex flex-wrap items-center justify-between border-b border-slate-200 pb-3 gap-2">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-lightbulb text-amber-500"></i> 单元评估干预辅导建议
+            </h3>
+            <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">根据当前所选科目与概念自动匹配的 DSKP 教学干预方案。</p>
+          </div>
+          <button onclick="openPopupPrintIntervention()" class="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-medium hover:bg-slate-900 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-print"></i> 打印干预报告
+          </button>
+        </div>
+
+        <div id="intervention-advice-box" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+
+        <div>
+          <h4 class="text-xs sm:text-sm font-bold text-slate-800 mb-2.5 flex items-center gap-2">
+            <i class="fa-solid fa-user-gear text-rose-500"></i> 需辅导/巩固学生追踪名单 (TP1 - TP3)
+          </h4>
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 text-slate-700 uppercase">
+                <tr>
+                  <th class="p-2 sm:p-2.5 font-bold">姓名</th>
+                  <th class="p-2 sm:p-2.5 font-bold">薄弱单元</th>
+                  <th class="p-2 sm:p-2.5 font-bold">TP</th>
+                  <th class="p-2 sm:p-2.5 font-bold">推荐辅导策略</th>
+                  <th class="p-2 sm:p-2.5 font-bold">状态</th>
+                </tr>
+              </thead>
+              <tbody id="intervention-students-body" class="divide-y divide-slate-200 bg-white"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: SETTINGS -->
+    <div id="tab-content-students" class="space-y-4 sm:space-y-6 hidden">
+      <div class="bg-white rounded-xl sm:rounded-2xl border border-indigo-200 shadow-sm p-4 sm:p-6 space-y-4 bg-indigo-50/20">
+        <div class="flex items-center justify-between border-b border-indigo-100 pb-3">
+          <h3 class="text-sm sm:text-base font-bold text-indigo-900 flex items-center gap-2">
+            <i class="fa-solid fa-chalkboard-user text-indigo-600"></i> 当前 <span id="current-grade-label-title" class="underline text-indigo-700">3 年级</span> 班级与教师设置
+          </h3>
+          <span class="text-[10px] sm:text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-semibold">独立保存</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">任课教师姓名 (Nama Guru)</label>
+            <input type="text" id="setting-teacher-name" value="LEE KIAT CHEW" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">班级名称 (Kelas)</label>
+            <input type="text" id="setting-class-name" value="3M" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
+          </div>
+          <div>
+            <button onclick="saveGradeClassSettings()" class="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs sm:text-sm font-bold shadow-sm transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-floppy-disk"></i> 保存当前年级班级设置
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
+        <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-3">
+          <i class="fa-solid fa-school-flag text-indigo-600"></i> 全校通用设置 (Maklumat Sekolah)
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">学校中文名称</label>
+            <input type="text" id="setting-school-cn" value="晏斗中华国民型华文小学" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">学校国文名称 (Nama Sekolah)</label>
+            <input type="text" id="setting-school-my" value="SJK(C) CHUNG HUA RANTAU" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div class="flex items-end">
+            <button onclick="saveSchoolSettings()" class="w-full px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-save"></i> 保存全校名称
+            </button>
+          </div>
+
+          <div class="md:col-span-3 border-t border-slate-100 pt-3 mt-1">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">上传校徽 (Upload Logo)</label>
+            <div class="flex flex-wrap items-center gap-3">
+              <input type="file" id="logo-file-input" accept="image/*" onchange="handleLogoUpload(event)" class="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+              <button onclick="removeLogo()" class="px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-medium transition">删除校徽</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        <div class="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-3">
+          <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-user-plus text-indigo-600"></i> 单个添加学生
+          </h3>
+          <div class="flex gap-2">
+            <input type="text" id="single-student-name" placeholder="输入学生姓名..." class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+            <button onclick="addSingleStudent()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs sm:text-sm font-medium transition whitespace-nowrap">添加</button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-3">
+          <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-users-line text-emerald-600"></i> 批量粘贴导入学生名单
+          </h3>
+          <textarea id="batch-students-textarea" rows="3" placeholder="每行一位学生姓名" class="w-full border border-slate-300 rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-indigo-500 custom-scrollbar"></textarea>
+          <div class="flex justify-end gap-2">
+            <button onclick="importBatchStudents(false)" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium transition">+ 追加名单</button>
+            <button onclick="importBatchStudents(true)" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-medium transition">替换名单</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+          <h3 class="text-xs sm:text-base font-bold text-slate-800">当前年级学生名单 (<span id="setting-student-count">28</span> 人)</h3>
+          <button onclick="deleteBatchStudents()" class="px-2.5 py-1 bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-semibold rounded-lg transition flex items-center gap-1">
+            <i class="fa-solid fa-trash-can"></i> 删除选中学生
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm">
+            <thead class="bg-slate-100 text-slate-600 text-xs uppercase border-b border-slate-200">
+              <tr>
+                <th class="p-2.5 w-10 text-center"><input type="checkbox" onchange="toggleSelectAll(this.checked)" class="rounded text-indigo-600 h-4 w-4"></th>
+                <th class="p-2.5 w-10 text-center font-bold">学号</th>
+                <th class="p-2.5 font-bold">学生姓名</th>
+                <th class="p-2.5 w-28 text-center font-bold">已评估单元</th>
+                <th class="p-2.5 w-20 text-center font-bold">操作</th>
+              </tr>
+            </thead>
+            <tbody id="setting-student-list-body" class="divide-y divide-slate-200"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Notification Toast -->
+  <div id="toast-notification" class="fixed bottom-16 sm:bottom-5 right-4 left-4 sm:left-auto sm:right-5 bg-slate-900/95 text-white px-4 py-3 rounded-xl shadow-2xl text-xs sm:text-sm font-medium transition-all duration-300 transform translate-y-20 opacity-0 z-50 flex items-center justify-center sm:justify-start gap-2">
+    <i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+    <span id="toast-message">操作已成功保存</span>
+  </div>
+
+  <script>
+    /****************************************************************
+     * 1. CURRICULUM DATA DEFINITION (MATH & SCIENCE - YEARS 1 TO 6)
+     ****************************************************************/
+    const CURRICULUM_DATA = {
+      math: {
+        "1": {
+          title: "一年级数学 (Matematik Tahun 1)",
+          units: [
+            { id: "1.0", name: "1.0 100以内的整数", sp: ["1.1.1","1.2.1","1.2.2","1.3.1","1.4.1","1.5.1","1.5.2","1.6.1","1.7.1","1.8.1","1.9.1","1.9.2","1.10.1"] },
+            { id: "2.0", name: "2.0 基本运算", sp: ["2.1.1","2.1.2","2.1.3","2.2.1","2.2.2","2.3.1","2.3.2","2.4.1","2.4.2","2.5.1","2.6.1"] },
+            { id: "3.0", name: "3.0 分数", sp: ["3.1.1","3.2.1"] },
+            { id: "4.0", name: "4.0 钱币", sp: ["4.1.1","4.1.2","4.1.3","4.2.1","4.2.2","4.3.1"] },
+            { id: "5.0", name: "5.0 时间与时刻", sp: ["5.1.1","5.1.2","5.1.3","5.1.4","5.2.1","5.2.2","5.2.3","5.3.1"] },
+            { id: "6.0", name: "6.0 度量衡", sp: ["6.1.1","6.1.2","6.1.3","6.2.1"] },
+            { id: "7.0", name: "7.0 空间", sp: ["7.1.1","7.1.2","7.1.3","7.1.4","7.2.1","7.2.2","7.2.3","7.2.4","7.3.1"] },
+            { id: "8.0", name: "8.0 数据处理", sp: ["8.1.1","8.2.1","8.3.1"] }
+          ]
+        },
+        "2": {
+          title: "二年级数学 (Matematik Tahun 2)",
+          units: [
+            { id: "1.0", name: "1.0 1000以内的整数", sp: ["1.1.1","1.1.2","1.2.1","1.3.1","1.3.2","1.4.1","1.4.2","1.5.1","1.6.1","1.7.1","1.7.2","1.8.1"] },
+            { id: "2.0", name: "2.0 基本运算", sp: ["2.1.1","2.1.2","2.2.1","2.2.2","2.3.1","2.3.2","2.4.1","2.4.2","2.5.1","2.5.2"] },
+            { id: "3.0", name: "3.0 分数与小数", sp: ["3.1.1","3.1.2","3.1.3","3.1.4","3.1.5","3.2.1","3.2.2","3.2.3","3.2.4","3.2.5","3.2.6","3.3.1","3.4.1"] },
+            { id: "4.0", name: "4.0 钱币", sp: ["4.1.1","4.1.2","4.2.1","4.2.2","4.3.1","4.3.2","4.4.1","4.5.1","4.6.1","4.7.1"] },
+            { id: "5.0", name: "5.0 时间与时刻", sp: ["5.1.1","5.1.2","5.1.3","5.1.4","5.2.1","5.3.1"] },
+            { id: "6.0", name: "6.0 度量衡", sp: ["6.1.1","6.1.2","6.1.3","6.2.1","6.2.2","6.2.3","6.3.1","6.3.2","6.3.3","6.4.1"] },
+            { id: "7.0", name: "7.0 空间", sp: ["7.1.1","7.1.2","7.1.3","7.2.1","7.2.2","7.3.1"] },
+            { id: "8.0", name: "8.0 数据处理", sp: ["8.1.1","8.2.1","8.3.1"] }
+          ]
+        },
+        "3": {
+          title: "三年级数学 (Matematik Tahun 3)",
+          units: [
+            { id: "1.0", name: "1.0 10 000以内的整数", sp: ["1.1.1","1.1.2","1.2.1","1.3.1","1.3.2","1.4.1","1.4.2","1.5.1","1.6.1","1.7.1","1.7.2","1.8.1"] },
+            { id: "2.0", name: "2.0 基本运算", sp: ["2.1.1","2.1.2","2.2.1","2.2.2","2.3.1","2.4.1","2.5.1","2.6.1","2.6.2","2.7.1","2.7.2","2.7.3"] },
+            { id: "3.0", name: "3.0 分数、小数与百分比", sp: ["3.1.1","3.1.2","3.1.3","3.1.4","3.1.5","3.1.6","3.1.7","3.2.1","3.2.2","3.2.3","3.2.4","3.2.5","3.3.1","3.3.2","3.3.3","3.3.4","3.4.1","3.4.2","3.4.3","3.5.1","3.5.2"] },
+            { id: "4.0", name: "4.0 钱币", sp: ["4.1.1","4.1.2","4.2.1","4.2.2","4.3.1","4.4.1","4.5.1","4.6.1","4.6.2","4.7.1","4.7.2","4.8.1","4.8.2"] },
+            { id: "5.0", name: "5.0 时间与时刻", sp: ["5.1.1","5.1.2","5.2.1","5.2.2","5.3.1","5.4.1","5.5.1","5.6.1","5.7.1","5.8.1","5.9.1","5.9.2"] },
+            { id: "6.0", name: "6.0 度量衡", sp: ["6.1.1","6.1.2","6.1.3","6.1.4","6.1.5","6.2.1","6.2.2","6.2.3","6.2.4","6.2.5","6.3.1","6.3.2","6.3.3","6.3.4","6.3.5","6.4.1","6.4.2"] },
+            { id: "7.0", name: "7.0 空间", sp: ["7.1.1","7.1.2","7.2.1","7.3.1","7.3.2","7.4.1","7.5.1"] },
+            { id: "8.0", name: "8.0 坐标", sp: ["8.1.1","8.1.2","8.1.3","8.2.1"] },
+            { id: "9.0", name: "9.0 数据处理", sp: ["9.1.1","9.2.1","9.3.1","9.4.1"] }
+          ]
+        },
+        "4": {
+          title: "四年级数学 (Matematik Tahun 4)",
+          units: [
+            { id: "1.0", name: "1.0 整数与运算", sp: ["1.1.1","1.1.2","1.2.1","1.2.2","1.3.1","1.4.1","1.5.1","1.5.2","1.6.1","1.6.2","1.6.3","1.6.4","1.6.5","1.7.1","1.7.2","1.8.1","1.8.2","1.9.1","1.9.2"] },
+            { id: "2.0", name: "2.0 分数、小数与百分比", sp: ["2.1.1","2.1.2","2.1.3","2.1.4","2.1.5","2.2.1","2.2.2","2.2.3","2.2.4","2.3.1","2.3.2","2.4.1"] },
+            { id: "3.0", name: "3.0 钱币", sp: ["3.1.1","3.1.2","3.1.3","3.1.4","3.2.1","3.2.2","3.3.1","3.3.2","3.3.3","3.4.1","3.4.2","3.4.3","3.5.1","3.5.2","3.6.1","3.6.2","3.7.1"] },
+            { id: "4.0", name: "4.0 时间与时刻", sp: ["4.1.1","4.2.1","4.3.1","4.4.1","4.4.2","4.5.1","4.5.2","4.6.1"] },
+            { id: "5.0", name: "5.0 度量衡", sp: ["5.1.1","5.1.2","5.1.3","5.1.4","5.1.5","5.1.6","5.1.7","5.1.8","5.1.9","5.2.1","5.2.2","5.3.1","5.3.2","5.4.1"] },
+            { id: "6.0", name: "6.0 空间", sp: ["6.1.1","6.2.1","6.2.2","6.3.1","6.3.2","6.4.1","6.5.1"] },
+            { id: "7.0", name: "7.0 坐标和比与比例", sp: ["7.1.1","7.1.2","7.2.1","7.3.1","7.4.1"] },
+            { id: "8.0", name: "8.0 数据处理", sp: ["8.1.1","8.1.2","8.2.1"] }
+          ]
+        },
+        "5": {
+          title: "五年级数学 (Matematik Tahun 5)",
+          units: [
+            { id: "1.0", name: "1.0 整数与运算", sp: ["1.1.1","1.1.2","1.2.1","1.3.1","1.4.1","1.4.2","1.5.1","1.5.2","1.6.1","1.6.2","1.6.3","1.6.4","1.7.1","1.8.1","1.8.2","1.9.1","1.9.2","1.9.3"] },
+            { id: "2.0", name: "2.0 分数、小数与百分比", sp: ["2.1.1","2.2.1","2.2.2","2.2.3","2.2.4","2.3.1","2.3.2","2.4.1"] },
+            { id: "3.0", name: "3.0 钱币", sp: ["3.1.1","3.1.2","3.1.3","3.1.4","3.2.1","3.3.1","3.3.2","3.4.1","3.4.2","3.5.1"] },
+            { id: "4.0", name: "4.0 时间与时刻", sp: ["4.1.1","4.2.1","4.2.2","4.3.1","4.3.2","4.4.1"] },
+            { id: "5.0", name: "5.0 度量衡", sp: ["5.1.1","5.1.2","5.1.3","5.1.4","5.1.5","5.1.6","5.2.1","5.2.2","5.2.3","5.2.4","5.2.5","5.3.1","5.3.2","5.3.3","5.3.4","5.3.5","5.4.1"] },
+            { id: "6.0", name: "6.0 空间", sp: ["6.1.1","6.2.1","6.3.1","6.3.2","6.4.1","6.5.1"] },
+            { id: "7.0", name: "7.0 坐标和比与比例", sp: ["7.1.1","7.2.1","7.3.1","7.4.1"] },
+            { id: "8.0", name: "8.0 数据处理", sp: ["8.1.1","8.2.1","8.3.1"] }
+          ]
+        },
+        "6": {
+          title: "六年级数学 (Matematik Tahun 6)",
+          units: [
+            { id: "1.0", name: "1.0 整数与基本数目", sp: ["1.1.1","1.1.2","1.1.3","1.1.4","1.1.5","1.2.1","1.3.1","1.4.1"] },
+            { id: "2.0", name: "2.0 分数、小数与百分比", sp: ["2.1.1","2.2.1","2.2.2","2.3.1","2.3.2","2.3.3","2.4.1","2.5.1"] },
+            { id: "3.0", name: "3.0 钱币", sp: ["3.1.1","3.1.2","3.2.1","3.2.2","3.3.1"] },
+            { id: "4.0", name: "4.0 时间与时刻", sp: ["4.1.1","4.1.2","4.2.1"] },
+            { id: "5.0", name: "5.0 度量衡", sp: ["5.1.1"] },
+            { id: "6.0", name: "6.0 空间", sp: ["6.1.1","6.1.2","6.2.1","6.2.2","6.3.1"] },
+            { id: "7.0", name: "7.0 坐标和比与比例", sp: ["7.1.1","7.2.1","7.3.1","7.4.1"] },
+            { id: "8.0", name: "8.0 数据处理", sp: ["8.1.1","8.2.1","8.2.2","8.3.1"] }
+          ]
+        }
+      },
+      science: {
+        "1": {
+          title: "一年级科学 (Sains Tahun 1)",
+          units: [
+            { id: "1.0", name: "1.0 科学技能", sp: ["1.1.1","1.1.2","1.2.1","1.2.2","1.2.3","1.2.4","1.2.5"] },
+            { id: "2.0", name: "2.0 科学室规则", sp: ["2.1.1"] },
+            { id: "3.0", name: "3.0 生物与非生物", sp: ["3.1.1","3.1.2","3.2.1","3.2.2","3.2.3","3.2.4","3.2.5"] },
+            { id: "4.0", name: "4.0 人类", sp: ["4.1.1","4.1.2","4.1.3","4.1.4","4.1.5"] },
+            { id: "5.0", name: "5.0 动物", sp: ["5.1.1","5.1.2","5.1.3","5.1.4","5.1.5"] },
+            { id: "6.0", name: "6.0 植物", sp: ["6.1.1","6.1.2","6.1.3","6.1.4"] },
+            { id: "7.0", name: "7.0 磁铁", sp: ["7.1.1","7.1.2","7.1.3","7.1.4","7.1.5","7.1.6"] },
+            { id: "8.0", name: "8.0 吸水性", sp: ["8.1.1","8.1.2","8.1.3","8.1.4","8.1.5","8.1.6"] },
+            { id: "9.0", name: "9.0 地球", sp: ["9.1.1","9.2.1","9.2.2","9.2.3"] },
+            { id: "10.0", name: "10.0 工艺", sp: ["10.1.1","10.1.2","10.1.3","10.1.4","10.1.5"] }
+          ]
+        },
+        "2": {
+          title: "二年级科学 (Sains Tahun 2)",
+          units: [
+            { id: "1.0", name: "1.0 科学技能", sp: ["1.1.1","1.1.2","1.1.3","1.1.4","1.2.1","1.2.2","1.2.3","1.2.4","1.2.5"] },
+            { id: "2.0", name: "2.0 科学室规则", sp: ["2.1.1"] },
+            { id: "3.0", name: "3.0 人类", sp: ["3.1.1","3.1.2","3.1.3","3.1.4","3.1.5","3.1.6"] },
+            { id: "4.0", name: "4.0 动物", sp: ["4.1.1","4.1.2","4.1.3","4.1.4","4.1.5","4.1.6","4.1.7"] },
+            { id: "5.0", name: "5.0 植物", sp: ["5.1.1","5.1.2","5.1.3","5.1.4","5.1.5","5.1.6"] },
+            { id: "6.0", name: "6.0 光和暗", sp: ["6.1.1","6.1.2","6.1.3","6.1.4","6.1.5","6.1.6"] },
+            { id: "7.0", name: "7.0 电路", sp: ["7.1.1","7.1.2","7.1.3","7.1.4","7.1.5","7.1.6","7.1.7"] },
+            { id: "8.0", name: "8.0 混合物", sp: ["8.1.1","8.1.2","8.1.3","8.1.4","8.1.5"] },
+            { id: "9.0", name: "9.0 地球", sp: ["9.1.1","9.1.2","9.1.3","9.1.4","9.1.5","9.2.1","9.2.2","9.2.3","9.2.4","9.2.5","9.2.6"] },
+            { id: "10.0", name: "10.0 工艺", sp: ["10.1.1","10.1.2","10.1.3","10.1.4","10.1.5","10.1.6"] }
+          ]
+        },
+        "3": {
+          title: "三年级科学 (Sains Tahun 3)",
+          units: [
+            { id: "1.0", name: "1.0 科学技能", sp: ["1.1.1","1.1.2","1.1.3","1.1.4","1.1.5","1.1.6","1.2.1","1.2.2","1.2.3","1.2.4","1.2.5"] },
+            { id: "2.0", name: "2.0 科学室规则", sp: ["2.1.1"] },
+            { id: "3.0", name: "3.0 人类", sp: ["3.1.1","3.1.2","3.1.3","3.1.4","3.1.5","3.2.1","3.2.2","3.2.3","3.2.4","3.2.5","3.3.1","3.3.2","3.3.3","3.3.4"] },
+            { id: "4.0", name: "4.0 动物", sp: ["4.1.1","4.1.2","4.1.3","4.1.4","4.1.5"] },
+            { id: "5.0", name: "5.0 植物", sp: ["5.1.1","5.1.2","5.1.3","5.1.4"] },
+            { id: "6.0", name: "6.0 测量", sp: ["6.1.1","6.1.2","6.1.3","6.1.4","6.1.5","6.1.6","6.1.7"] },
+            { id: "7.0", name: "7.0 密度", sp: ["7.1.1","7.1.2","7.1.3","7.1.4"] },
+            { id: "8.0", name: "8.0 酸与碱", sp: ["8.1.1","8.1.2","8.1.3","8.1.4"] },
+            { id: "9.0", name: "9.0 太阳系", sp: ["9.1.1","9.1.2","9.1.3","9.1.4","9.1.5"] },
+            { id: "10.0", name: "10.0 机械", sp: ["10.1.1","10.1.2","10.1.3","10.1.4","10.1.5"] }
+          ]
+        },
+        "4": {
+          title: "四年级科学 (Sains Tahun 4)",
+          units: [
+            { id: "1.0", name: "1.0 科学技能", sp: ["1.1.1","1.1.2","1.1.3","1.1.4","1.1.5","1.1.6","1.1.7","1.1.8","1.1.9","1.1.10","1.1.11","1.1.12"] },
+            { id: "2.0", name: "2.0 人类", sp: ["2.1.1","2.1.2","2.1.3","2.1.4","2.1.5","2.1.6","2.2.1","2.2.2","2.2.3","2.2.4","2.3.1","2.3.2","2.3.3","2.3.4","2.3.5"] },
+            { id: "3.0", name: "3.0 动物", sp: ["3.1.1","3.1.2","3.1.3","3.1.4","3.2.1","3.2.2","3.2.3","3.2.4"] },
+            { id: "4.0", name: "4.0 植物", sp: ["4.1.1","4.1.2","4.1.3","4.1.4","4.2.1","4.2.2","4.2.3","4.2.4","4.2.5"] },
+            { id: "5.0", name: "5.0 光的特性", sp: ["5.1.1","5.1.2","5.1.3","5.1.4","5.2.1","5.2.2","5.2.3","5.2.4","5.3.1","5.3.2","5.3.3","5.3.4"] },
+            { id: "6.0", name: "6.0 声音", sp: ["6.1.1","6.1.2","6.1.3","6.1.4","6.1.5"] },
+            { id: "7.0", name: "7.0 能", sp: ["7.1.1","7.1.2","7.1.3","7.1.4","7.1.5","7.1.6","7.2.1","7.2.2","7.2.3"] },
+            { id: "8.0", name: "8.0 材料", sp: ["8.1.1","8.1.2","8.1.3","8.2.1","8.2.2","8.2.3","8.2.4"] },
+            { id: "9.0", name: "9.0 地球", sp: ["9.1.1","9.1.2","9.1.3","9.2.1","9.2.2","9.2.3","9.2.4"] },
+            { id: "10.0", name: "10.0 机械", sp: ["10.1.1","10.1.2","10.1.3","10.2.1","10.2.2","10.2.3","10.2.4"] }
+          ]
+        },
+        "5": {
+          title: "五年级科学 (Sains Tahun 5)",
+          units: [
+            { id: "1.0", name: "1.0 科学探究", sp: ["1.1.1","1.1.2","1.1.3","1.1.4","1.1.5","1.1.6","1.1.7","1.1.8","1.1.9","1.1.10","1.1.11","1.1.12"] },
+            { id: "2.0", name: "2.0 人类", sp: ["2.1.1","2.1.2","2.1.3","2.1.4","2.1.5","2.2.1","2.2.2","2.2.3","2.2.4","2.3.1","2.3.2","2.3.3","2.3.4"] },
+            { id: "3.0", name: "3.0 动物", sp: ["3.1.1","3.1.2","3.1.3","3.1.4","3.1.5","3.1.6","3.2.1","3.2.2","3.2.3","3.2.4","3.3.1","3.3.2","3.3.3","3.3.4","3.3.5","3.3.6","3.3.7"] },
+            { id: "4.0", name: "4.0 植物", sp: ["4.1.1","4.1.2","4.1.3","4.2.1","4.2.2","4.2.3","4.2.4"] },
+            { id: "5.0", name: "5.0 电", sp: ["5.1.1","5.2.1","5.2.2","5.2.3","5.2.4","5.2.5","5.2.6","5.2.7","5.3.1","5.3.2","5.3.3","5.3.4"] },
+            { id: "6.0", name: "6.0 热", sp: ["6.1.1","6.1.2","6.1.3","6.1.4","6.1.5","6.1.6","6.1.7"] },
+            { id: "7.0", name: "7.0 生锈", sp: ["7.1.1","7.1.2","7.1.3","7.1.4","7.1.5","7.1.6"] },
+            { id: "8.0", name: "8.0 物质", sp: ["8.1.1","8.1.2","8.1.3","8.1.4","8.1.5","8.2.1","8.2.2","8.2.3","8.2.4"] },
+            { id: "9.0", name: "9.0 月相与星座", sp: ["9.1.1","9.1.2","9.1.3","9.1.4","9.2.1","9.2.2","9.2.3"] },
+            { id: "10.0", name: "10.0 机械", sp: ["10.1.1","10.1.2","10.1.3","10.1.4","10.1.5"] }
+          ]
+        },
+        "6": {
+          title: "六年级科学 (Sains Tahun 6)",
+          units: [
+            { id: "1.0", name: "1.0 科学技能", sp: ["1.1.1","1.1.2","1.1.3","1.1.4","1.1.5","1.1.6","1.1.7","1.1.8","1.1.9","1.1.10","1.1.11","1.1.12"] },
+            { id: "2.0", name: "2.0 人类", sp: ["2.1.1","2.1.2","2.1.3","2.1.4","2.2.1","2.2.2","2.2.3","2.2.4","2.2.5","2.2.6"] },
+            { id: "3.0", name: "3.0 微生物", sp: ["3.1.1","3.1.2","3.1.3","3.1.4","3.1.5","3.1.6"] },
+            { id: "4.0", name: "4.0 生物之间的相互关系", sp: ["4.1.1","4.1.2","4.1.3","4.1.4","4.2.1","4.2.2","4.2.3"] },
+            { id: "5.0", name: "5.0 保护与复原", sp: ["5.1.1","5.1.2","5.1.3","5.1.4","5.1.5","5.1.6","5.1.7"] },
+            { id: "6.0", name: "6.0 力", sp: ["6.1.1","6.1.2","6.1.3","6.2.1","6.2.2","6.2.3","6.2.4","6.2.5","6.3.1","6.3.2","6.3.3","6.3.4"] },
+            { id: "7.0", name: "7.0 速度", sp: ["7.1.1","7.1.2","7.1.3","7.1.4","7.1.5"] },
+            { id: "8.0", name: "8.0 食物保存科技", sp: ["8.1.1","8.1.2","8.1.3","8.2.1","8.2.2","8.2.3","8.2.4","8.2.5","8.2.6","8.2.7"] },
+            { id: "9.0", name: "9.0 废物", sp: ["9.1.1","9.1.2","9.1.3","9.1.4","9.1.5","9.1.6"] },
+            { id: "10.0", name: "10.0 月食和日食", sp: ["10.1.1","10.1.2","10.1.3","10.1.4","10.1.5"] },
+            { id: "11.0", name: "11.0 星系", sp: ["11.1.1","11.1.2","11.1.3","11.1.4","11.1.5"] },
+            { id: "12.0", name: "12.0 平稳性与坚固性", sp: ["12.1.1","12.1.2","12.1.3","12.1.4","12.1.5","12.1.6","12.1.7"] },
+            { id: "13.0", name: "13.0 工艺", sp: ["13.1.1","13.1.2","13.1.3","13.1.4"] }
+          ]
+        }
+      }
+    };
+
+    const UNIT_INTERVENTION_TEMPLATES = {
+      "整数": [
+        { title: "1. 数位与数值直观化 (Base-Ten Blocks)", icon: "fa-cubes", text: "使用十进位积木与数位表，引导 TP1-TP2 学生通过动手拼摆拆解千位、百位与十位的数值。" },
+        { title: "2. 数轴跳跃计数法 (Number Line)", icon: "fa-timeline", text: "绘制可视化的数轴，指导学生通过跳跃计数 (Counting in jumps) 巩固顺序、倒序与数序规律。" },
+        { title: "3. 近似值舍入山丘法 (Rounding Hill)", icon: "fa-mountain", text: "利用山丘图解释“四舍五入”规则，降低学生在十位、百位及千位近似值上的混淆率。" }
+      ],
+      "运算": [
+        { title: "1. 带网格竖式对齐练习 (Grid Alignment)", icon: "fa-table-cells", text: "提供带有数位网格的竖式卡片，纠正两步或多位数加减乘除时的进位与借位对齐错误。" },
+        { title: "2. 乘法口诀每日 5 分钟 (Flashcards)", icon: "fa-layer-group", text: "运用九宫格与乘法表闪卡，通过游戏化对战提升乘除法基本事实回忆速度。" }
+      ],
+      "分数": [
+        { title: "1. 折纸与图形分割 (Fraction Paper Folding)", icon: "fa-pie-chart", text: "通过长方形/圆形折纸和涂色活动，帮助学生建立“部分与整体”的分数直观概念。" },
+        { title: "2. 等值分数墙对比 (Fraction Wall)", icon: "fa-equals", text: "使用等值分数墙工具，直观对比 1/2, 2/4, 3/6 等量关系，辅助分数的约分与通分。" }
+      ],
+      "技能": [
+        { title: "1. 动手操作与观察记录 (Hands-on Observation)", icon: "fa-flask", text: "引导学生通过实际观察自然现象与实验步骤，使用记录表或图画呈现观察结果。" },
+        { title: "2. 变量分类与对比试验 (Variables & Control)", icon: "fa-sliders", text: "利用对比图卡协助学生区分操纵性变量、反应性变量与固定性变量。" }
+      ],
+      "人类": [
+        { title: "1. 人体结构与器官模型 (3D Human Body Model)", icon: "fa-child", text: "运用人体器官模型或交互式图示，帮助学生直观理解呼吸、消化、骨骼与血液循环系统。" },
+        { title: "2. 健康生活与系统保健 (Health Practice)", icon: "fa-heart-pulse", text: "通过情境卡片讨论伤害人体器官的行为，强化自我保健意识与良好生活习惯。" }
+      ],
+      "动物": [
+        { title: "1. 动物特征与分类卡片 (Animal Classification)", icon: "fa-paw", text: "提供不同动物的外形特征、呼吸器官与食性卡片，引导学生进行图表分类。" },
+        { title: "2. 食物链与食物网建构 (Food Web Construction)", icon: "fa-diagram-project", text: "使用生产者与消费者拼卡，协助学生绘制正确的食物链与食物网关系。" }
+      ],
+      "植物": [
+        { title: "1. 植物器官与成长过程 (Plant Life Cycle)", icon: "fa-seedling", text: "种植豆类实物，观察并记录种子萌发、茎叶生长及开花结果的完整过程。" },
+        { title: "2. 光合作用与传播方式 (Photosynthesis & Seed Dispersal)", icon: "fa-sun", text: "通过动画与实物模型，展示植物通过水、风、动物及自动爆裂传播种子的机制。" }
+      ],
+      "光": [
+        { title: "1. 光线传播与影子实验 (Light & Shadow Experiment)", icon: "fa-lightbulb", text: "利用手电筒与不同透光度的遮挡物，亲身体验光沿着直线传播与影子的形成过程。" }
+      ],
+      "电": [
+        { title: "1. 动手组装简单电路 (Circuit Assembly)", icon: "fa-bolt", text: "提供电池、导线、开关和小灯泡，指导学生组装并对比串联与并联电路的亮度差异。" }
+      ],
+      "地球": [
+        { title: "1. 太阳系与天体运转模型 (Solar System Model)", icon: "fa-earth-asia", text: "利用球体模型演示地球自转与公转、昼夜交替及月相变化的形成原理。" }
+      ]
+    };
+
+    const DEFAULT_STUDENT_NAMES = [
+      "陈俊轩", "陈健豪", "覃家乐", "佐斯华", "刘俊霆", "李弘轩",
+      "吕向廷", "廖健翔", "林铭浩", "卢立范", "罗山", "徐榆宗", "山南",
+      "谭健乐", "邓凯文", "余子谦", "张美婷", "张芯兒",  "熹妲娜",
+      "何丽莎", "李雯萱", "吕婉妍", "卡是营", "杨丽娜", "杨丽莎", "余汶恵"
+    ];
+
+    /****************************************************************
+     * 2. STATE MANAGEMENT & LOCAL STORAGE
+     ****************************************************************/
+    let currentSubject = "science";
+    let currentGrade = "3";
+    let selectedStudentIds = new Set();
+    let tpChartInstance = null;
+    let unitChartInstance = null;
+
+    let appSettings = {
+      schoolNameCN: "晏斗中华国民型华文小学",
+      schoolNameMY: "SJK(C) CHUNG HUA RANTAU",
+      logoBase64: "",
+      gradeInfo: {
+        "1": { teacherName: "卢老师", className: "1M" },
+        "2": { teacherName: "陈老师", className: "2M" },
+        "3": { teacherName: "李老师", className: "3M" },
+        "4": { teacherName: "张老师", className: "4M" },
+        "5": { teacherName: "林老师", className: "5M" },
+        "6": { teacherName: "黄老师", className: "6M" }
+      }
+    };
+
+    let gradeDataStore = {};
+
+    function initApp() {
+      loadSettings();
+      loadGradeData(currentSubject, currentGrade);
+      setupUnitDropdown();
+      renderTransitTable();
+      renderSettingStudentList();
+    }
+
+    function loadSettings() {
+      const saved = localStorage.getItem("pbd_app_settings");
+      if (saved) {
+        try { 
+          const parsed = JSON.parse(saved);
+          appSettings.schoolNameCN = parsed.schoolNameCN || appSettings.schoolNameCN;
+          appSettings.schoolNameMY = parsed.schoolNameMY || appSettings.schoolNameMY;
+          appSettings.logoBase64 = parsed.logoBase64 || "";
+          
+          if (parsed.gradeInfo) {
+            appSettings.gradeInfo = Object.assign({}, appSettings.gradeInfo, parsed.gradeInfo);
+          }
+        } catch(e){}
+      }
+
+      document.getElementById("setting-school-cn").value = appSettings.schoolNameCN;
+      document.getElementById("setting-school-my").value = appSettings.schoolNameMY;
+      
+      refreshGradeSettingInputs();
+      updateHeaderAndLogoUI();
+    }
+
+    function getTeacherName(grade) {
+      return (appSettings.gradeInfo[grade] && appSettings.gradeInfo[grade].teacherName) ? appSettings.gradeInfo[grade].teacherName : "未设置老师";
+    }
+
+    function getClassName(grade) {
+      return (appSettings.gradeInfo[grade] && appSettings.gradeInfo[grade].className) ? appSettings.gradeInfo[grade].className : (grade + "M");
+    }
+
+    function refreshGradeSettingInputs() {
+      document.getElementById("setting-teacher-name").value = getTeacherName(currentGrade);
+      document.getElementById("setting-class-name").value = getClassName(currentGrade);
+      document.getElementById("current-grade-label-title").innerText = `${currentGrade} 年级`;
+    }
+
+    function saveGradeClassSettings() {
+      const teacher = document.getElementById("setting-teacher-name").value.trim();
+      const cls = document.getElementById("setting-class-name").value.trim();
+
+      if (!appSettings.gradeInfo[currentGrade]) {
+        appSettings.gradeInfo[currentGrade] = {};
+      }
+
+      appSettings.gradeInfo[currentGrade].teacherName = teacher;
+      appSettings.gradeInfo[currentGrade].className = cls;
+
+      localStorage.setItem("pbd_app_settings", JSON.stringify(appSettings));
+      updateHeaderAndLogoUI();
+      showToast(`已成功保存 ${currentGrade} 年级的老师（${teacher}）和班级（${cls}）！`);
+    }
+
+    function saveSchoolSettings() {
+      appSettings.schoolNameCN = document.getElementById("setting-school-cn").value.trim();
+      appSettings.schoolNameMY = document.getElementById("setting-school-my").value.trim();
+      
+      localStorage.setItem("pbd_app_settings", JSON.stringify(appSettings));
+      updateHeaderAndLogoUI();
+      showToast("全校名称设置已保存！");
+    }
+
+    function updateHeaderAndLogoUI() {
+      const currentTeacher = getTeacherName(currentGrade);
+      const currentClass = getClassName(currentGrade);
+      const subLabel = currentSubject === "math" ? "数学" : "科学";
+
+      document.getElementById("nav-school-name").innerText = `${appSettings.schoolNameMY} ${subLabel} PBD 评估系统`;
+      document.getElementById("nav-sub-info").innerText = `科目: ${subLabel} | 当前年级: ${currentGrade}年级 | 任课教师: ${currentTeacher} | 班级: ${currentClass}`;
+      
+      const fallback = document.getElementById("nav-logo-fallback");
+      const img = document.getElementById("nav-logo-img");
+
+      if (appSettings.logoBase64) {
+        img.src = appSettings.logoBase64;
+        img.classList.remove("hidden");
+        fallback.classList.add("hidden");
+      } else {
+        img.classList.add("hidden");
+        fallback.classList.remove("hidden");
+      }
+    }
+
+    function handleLogoUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        appSettings.logoBase64 = e.target.result;
+        saveSchoolSettings();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeLogo() {
+      appSettings.logoBase64 = "";
+      saveSchoolSettings();
+      document.getElementById("logo-file-input").value = "";
+    }
+
+    function loadGradeData(subject, grade) {
+      const key = `pbd_data_${subject}_grade_${grade}`;
+      const fallbackKey = `pbd_data_grade_${grade}`;
+      
+      let saved = localStorage.getItem(key);
+      if (!saved && subject === "math") {
+        saved = localStorage.getItem(fallbackKey);
+      }
+
+      if (saved) {
+        try {
+          gradeDataStore[grade] = JSON.parse(saved);
+        } catch(e) {
+          gradeDataStore[grade] = createDefaultStudents();
+        }
+      } else {
+        gradeDataStore[grade] = createDefaultStudents();
+      }
+    }
+
+    function saveCurrentGradeData() {
+      const key = `pbd_data_${currentSubject}_grade_${currentGrade}`;
+      localStorage.setItem(key, JSON.stringify(gradeDataStore[currentGrade]));
+    }
+
+    function createDefaultStudents() {
+      return DEFAULT_STUDENT_NAMES.map((name, index) => ({
+        id: "STU_" + (index + 1),
+        name: name,
+        evaluations: {}
+      }));
+    }
+
+    function changeSubject(newSubject) {
+      currentSubject = newSubject;
+      selectedStudentIds.clear();
+      loadGradeData(currentSubject, currentGrade);
+      updateHeaderAndLogoUI();
+      setupUnitDropdown();
+      renderTransitTable();
+      renderSettingStudentList();
+      if (!document.getElementById("tab-content-analytics").classList.contains("hidden")) {
+        renderAnalyticsPage();
+      }
+      showToast(`已切换至 ${newSubject === 'math' ? '数学' : '科学'} 科目`);
+    }
+
+    function changeGrade(newGrade) {
+      currentGrade = newGrade;
+      selectedStudentIds.clear();
+      loadGradeData(currentSubject, currentGrade);
+      refreshGradeSettingInputs();
+      updateHeaderAndLogoUI();
+      setupUnitDropdown();
+      renderTransitTable();
+      renderSettingStudentList();
+      if (!document.getElementById("tab-content-analytics").classList.contains("hidden")) {
+        renderAnalyticsPage();
+      }
+      showToast(`已切换至 ${newGrade} 年级`);
+    }
+
+    function setupUnitDropdown() {
+      const unitSelect = document.getElementById("unit-select");
+      const analyticsUnitSelect = document.getElementById("analytics-unit-select");
+      
+      unitSelect.innerHTML = "";
+      analyticsUnitSelect.innerHTML = `<option value="ALL">显示：全学期所有单元综合分析</option>`;
+
+      const units = CURRICULUM_DATA[currentSubject][currentGrade].units;
+      units.forEach(u => {
+        const opt = document.createElement("option");
+        opt.value = u.id;
+        opt.textContent = u.name;
+        unitSelect.appendChild(opt);
+
+        const optAnalytics = document.createElement("option");
+        optAnalytics.value = u.id;
+        optAnalytics.textContent = `单元分析：${u.name}`;
+        analyticsUnitSelect.appendChild(optAnalytics);
+      });
+
+      if (units.length > 0) {
+        document.getElementById("current-unit-title").innerText = units[0].name;
+      }
+    }
+
+    /****************************************************************
+     * 3. TRANSIT TABLE RENDER (自适应全屏弹性列布局)
+     ****************************************************************/
+    function renderTransitTable() {
+      const unitId = document.getElementById("unit-select").value;
+      const unitObj = CURRICULUM_DATA[currentSubject][currentGrade].units.find(u => u.id === unitId);
+      if (!unitObj) return;
+
+      document.getElementById("current-unit-title").innerText = unitObj.name;
+
+      const students = gradeDataStore[currentGrade] || [];
+
+      // Render SP headers with dynamic flex-1 column width
+      const spContainer = document.getElementById("sp-headers-container");
+      spContainer.innerHTML = `
+        <div class="flex divide-x divide-slate-200 w-full">
+          ${unitObj.sp.map(spCode => {
+            const isColumnAllChecked = students.length > 0 && students.every(s => s.evaluations[unitId]?.sp[spCode]);
+            return `
+              <div class="flex-1 min-w-[28px] sm:min-w-[32px] py-1 sm:py-1.5 text-center text-xs font-semibold text-slate-600 bg-slate-50 flex flex-col items-center justify-center gap-0.5 sm:gap-1 border-r border-slate-200 overflow-hidden">
+                <span class="text-[9px] sm:text-[11px] leading-tight tracking-tighter truncate block w-full px-0.5" title="${spCode}">${spCode}</span>
+                <input type="checkbox" title="勾选/取消全班 ${spCode}" onchange="toggleColumnSP('${spCode}', this.checked)" ${isColumnAllChecked ? 'checked' : ''} class="w-3.5 h-3.5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer">
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      // Render Student rows with dynamic flex-1 column width
+      const tbody = document.getElementById("transit-table-body");
+      tbody.innerHTML = "";
+
+      students.forEach((stu, index) => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-indigo-50/40 transition border-b border-slate-200";
+
+        const unitEval = stu.evaluations[unitId] || { sp: {}, tp: "" };
+        const checkedCount = unitObj.sp.filter(spCode => unitEval.sp[spCode]).length;
+        const totalSp = unitObj.sp.length;
+        const percent = totalSp > 0 ? Math.round((checkedCount / totalSp) * 100) : 0;
+
+        tr.innerHTML = `
+          <td class="p-2 sm:p-3 text-center sticky-col-1 border-r border-slate-200 bg-white">
+            <input type="checkbox" onchange="toggleStudentSelect('${stu.id}', this.checked)" ${selectedStudentIds.has(stu.id) ? 'checked' : ''} class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+          </td>
+          <td class="p-1.5 sm:p-3 text-center sticky-col-2 border-r border-slate-200 font-mono text-[11px] sm:text-xs text-slate-500 bg-white">${index + 1}</td>
+          <td class="p-2 sm:p-3 sticky-col-3 border-r border-slate-200 font-semibold text-slate-800 bg-white whitespace-nowrap min-w-[110px] max-w-[130px] overflow-hidden text-ellipsis">${stu.name}</td>
+          
+          <td class="p-0 border-r border-slate-200">
+            <div class="flex divide-x divide-slate-200 w-full">
+              ${unitObj.sp.map(spCode => `
+                <div class="flex-1 min-w-[28px] sm:min-w-[32px] p-1.5 sm:p-2 text-center flex items-center justify-center">
+                  <input type="checkbox" onchange="toggleSP('${stu.id}', '${unitId}', '${spCode}', this.checked)" ${unitEval.sp[spCode] ? 'checked' : ''} class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer">
+                </div>
+              `).join('')}
+            </div>
+          </td>
+
+          <td class="p-1.5 sm:p-2 text-center border-r border-slate-200 bg-indigo-50/30 whitespace-nowrap">
+            <div class="text-[11px] sm:text-xs font-bold text-indigo-700">${checkedCount}/${totalSp}</div>
+            <div class="w-full bg-slate-200 rounded-full h-1.5 mt-0.5 sm:mt-1 overflow-hidden">
+              <div class="bg-indigo-600 h-1.5 rounded-full" style="width: ${percent}%"></div>
+            </div>
+          </td>
+
+          <td class="p-1.5 sm:p-2 text-center border-r border-slate-200 bg-amber-50/30 whitespace-nowrap">
+            <select onchange="updateStudentTP('${stu.id}', '${unitId}', this.value)" class="text-[11px] sm:text-xs font-bold border rounded px-1 py-0.5 sm:px-1.5 sm:py-1 ${getTPClass(unitEval.tp)} focus:ring-2 focus:ring-indigo-500">
+              <option value="">未设置</option>
+              <option value="TP1" ${unitEval.tp==='TP1'?'selected':''}>TP 1</option>
+              <option value="TP2" ${unitEval.tp==='TP2'?'selected':''}>TP 2</option>
+              <option value="TP3" ${unitEval.tp==='TP3'?'selected':''}>TP 3</option>
+              <option value="TP4" ${unitEval.tp==='TP4'?'selected':''}>TP 4</option>
+              <option value="TP5" ${unitEval.tp==='TP5'?'selected':''}>TP 5</option>
+              <option value="TP6" ${unitEval.tp==='TP6'?'selected':''}>TP 6</option>
+            </select>
+          </td>
+
+          <td class="p-1.5 sm:p-2 text-center whitespace-nowrap">
+            <button onclick="deleteSingleStudent('${stu.id}')" class="text-rose-500 hover:text-rose-700 p-1 transition" title="删除学生">
+              <i class="fa-solid fa-trash-can text-xs sm:text-sm"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function getTPClass(tp) {
+      switch(tp) {
+        case 'TP1': return 'tp-badge-1';
+        case 'TP2': return 'tp-badge-2';
+        case 'TP3': return 'tp-badge-3';
+        case 'TP4': return 'tp-badge-4';
+        case 'TP5': return 'tp-badge-5';
+        case 'TP6': return 'tp-badge-6';
+        default: return 'bg-white text-slate-600 border-slate-300';
+      }
+    }
+
+    function toggleSP(studentId, unitId, spCode, isChecked) {
+      const student = gradeDataStore[currentGrade].find(s => s.id === studentId);
+      if (!student) return;
+      if (!student.evaluations[unitId]) {
+        student.evaluations[unitId] = { sp: {}, tp: "" };
+      }
+      student.evaluations[unitId].sp[spCode] = isChecked;
+
+      autoSuggestTP(student, unitId);
+      saveCurrentGradeData();
+      renderTransitTable();
+    }
+
+    function toggleColumnSP(spCode, isChecked) {
+      const unitId = document.getElementById("unit-select").value;
+      const students = gradeDataStore[currentGrade] || [];
+
+      students.forEach(s => {
+        if (!s.evaluations[unitId]) {
+          s.evaluations[unitId] = { sp: {}, tp: "" };
+        }
+        s.evaluations[unitId].sp[spCode] = isChecked;
+        autoSuggestTP(s, unitId);
+      });
+
+      saveCurrentGradeData();
+      renderTransitTable();
+      showToast(isChecked ? `已全选 ${spCode} 学习标准` : `已取消全选 ${spCode}`);
+    }
+
+    function batchToggleAllSP(isChecked) {
+      const unitId = document.getElementById("unit-select").value;
+      const unitObj = CURRICULUM_DATA[currentSubject][currentGrade].units.find(u => u.id === unitId);
+      if (!unitObj) return;
+
+      const students = gradeDataStore[currentGrade] || [];
+      const targetStudents = selectedStudentIds.size > 0 
+        ? students.filter(s => selectedStudentIds.has(s.id))
+        : students;
+
+      if (targetStudents.length === 0) {
+        alert("班级目前无学生！");
+        return;
+      }
+
+      targetStudents.forEach(s => {
+        if (!s.evaluations[unitId]) {
+          s.evaluations[unitId] = { sp: {}, tp: "" };
+        }
+        unitObj.sp.forEach(spCode => {
+          s.evaluations[unitId].sp[spCode] = isChecked;
+        });
+        autoSuggestTP(s, unitId);
+      });
+
+      saveCurrentGradeData();
+      renderTransitTable();
+      showToast(isChecked ? `已为 ${targetStudents.length} 名学生一键勾选所有 SP` : `已清空 ${targetStudents.length} 名学生的 SP`);
+    }
+
+    function autoSuggestTP(student, unitId) {
+      const unitObj = CURRICULUM_DATA[currentSubject][currentGrade].units.find(u => u.id === unitId);
+      if (!unitObj) return;
+      const checkedCount = unitObj.sp.filter(sp => student.evaluations[unitId].sp[sp]).length;
+      const total = unitObj.sp.length;
+      const ratio = total > 0 ? checkedCount / total : 0;
+
+      if (ratio === 1) student.evaluations[unitId].tp = "TP5";
+      else if (ratio >= 0.7) student.evaluations[unitId].tp = "TP4";
+      else if (ratio >= 0.4) student.evaluations[unitId].tp = "TP3";
+      else if (ratio > 0) student.evaluations[unitId].tp = "TP2";
+      else if (ratio === 0 && Object.keys(student.evaluations[unitId].sp).length > 0) student.evaluations[unitId].tp = "TP1";
+    }
+
+    function updateStudentTP(studentId, unitId, tpValue) {
+      const student = gradeDataStore[currentGrade].find(s => s.id === studentId);
+      if (!student) return;
+      if (!student.evaluations[unitId]) {
+        student.evaluations[unitId] = { sp: {}, tp: "" };
+      }
+      student.evaluations[unitId].tp = tpValue;
+      saveCurrentGradeData();
+      renderTransitTable();
+    }
+
+    function toggleSelectAll(isChecked) {
+      const students = gradeDataStore[currentGrade] || [];
+      if (isChecked) {
+        students.forEach(s => selectedStudentIds.add(s.id));
+      } else {
+        selectedStudentIds.clear();
+      }
+      renderTransitTable();
+      renderSettingStudentList();
+    }
+
+    function toggleStudentSelect(studentId, isChecked) {
+      if (isChecked) selectedStudentIds.add(studentId);
+      else selectedStudentIds.delete(studentId);
+    }
+
+    function applyBatchTP() {
+      const tpVal = document.getElementById("batch-tp-select").value;
+      if (!tpVal) { alert("请先选择要批量应用的 TP 级别"); return; }
+      if (selectedStudentIds.size === 0) { alert("请先在左侧勾选要评级的学生"); return; }
+
+      const unitId = document.getElementById("unit-select").value;
+      gradeDataStore[currentGrade].forEach(stu => {
+        if (selectedStudentIds.has(stu.id)) {
+          if (!stu.evaluations[unitId]) stu.evaluations[unitId] = { sp: {}, tp: "" };
+          stu.evaluations[unitId].tp = tpVal;
+        }
+      });
+      saveCurrentGradeData();
+      renderTransitTable();
+      showToast(`已将 ${selectedStudentIds.size} 名学生的评估更新为 ${tpVal}`);
+    }
+
+    function clearBatchScores() {
+      if (selectedStudentIds.size === 0) { alert("请勾选需要清空成绩的学生"); return; }
+      if (!confirm("确定要清空所选学生在当前单元的 SP 和 TP 成绩吗？")) return;
+
+      const unitId = document.getElementById("unit-select").value;
+      gradeDataStore[currentGrade].forEach(stu => {
+        if (selectedStudentIds.has(stu.id)) {
+          stu.evaluations[unitId] = { sp: {}, tp: "" };
+        }
+      });
+      saveCurrentGradeData();
+      renderTransitTable();
+      showToast("已清空所选学生的成绩");
+    }
+
+    function deleteBatchStudents() {
+      if (selectedStudentIds.size === 0) { alert("请勾选需要删除的学生"); return; }
+      if (!confirm(`确定要彻底删除选中的 ${selectedStudentIds.size} 名学生及其所有年级评估记录吗？`)) return;
+
+      gradeDataStore[currentGrade] = gradeDataStore[currentGrade].filter(s => !selectedStudentIds.has(s.id));
+      selectedStudentIds.clear();
+      saveCurrentGradeData();
+      renderTransitTable();
+      renderSettingStudentList();
+      showToast("所选学生资料已删除");
+    }
+
+    function deleteSingleStudent(studentId) {
+      if (!confirm("确定删除该学生吗？")) return;
+      gradeDataStore[currentGrade] = gradeDataStore[currentGrade].filter(s => s.id !== studentId);
+      selectedStudentIds.delete(studentId);
+      saveCurrentGradeData();
+      renderTransitTable();
+      renderSettingStudentList();
+      showToast("学生已删除");
+    }
+
+    /****************************************************************
+     * 4. STUDENT MANAGEMENT & BATCH IMPORT
+     ****************************************************************/
+    function renderSettingStudentList() {
+      const tbody = document.getElementById("setting-student-list-body");
+      tbody.innerHTML = "";
+      const students = gradeDataStore[currentGrade] || [];
+
+      document.getElementById("setting-student-count").innerText = students.length;
+
+      students.forEach((stu, index) => {
+        const evalUnitsCount = Object.keys(stu.evaluations).filter(u => stu.evaluations[u].tp).length;
+
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50 transition border-b border-slate-200";
+        tr.innerHTML = `
+          <td class="p-2.5 text-center">
+            <input type="checkbox" onchange="toggleStudentSelect('${stu.id}', this.checked)" ${selectedStudentIds.has(stu.id) ? 'checked' : ''} class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+          </td>
+          <td class="p-2.5 text-center font-mono text-xs text-slate-500">${index + 1}</td>
+          <td class="p-2.5 font-semibold text-slate-800">${stu.name}</td>
+          <td class="p-2.5 text-center text-xs font-bold text-indigo-600">${evalUnitsCount} 个单元</td>
+          <td class="p-2.5 text-center">
+            <button onclick="deleteSingleStudent('${stu.id}')" class="px-2 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded text-xs font-medium transition">删除</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function addSingleStudent() {
+      const nameInput = document.getElementById("single-student-name");
+      const name = nameInput.value.trim();
+      if (!name) return;
+
+      const newStu = {
+        id: "STU_" + Date.now(),
+        name: name,
+        evaluations: {}
+      };
+      gradeDataStore[currentGrade].push(newStu);
+      saveCurrentGradeData();
+      nameInput.value = "";
+      renderTransitTable();
+      renderSettingStudentList();
+      showToast(`已成功添加学生: ${name}`);
+    }
+
+    function importBatchStudents(isReplace) {
+      const textarea = document.getElementById("batch-students-textarea");
+      const text = textarea.value.trim();
+      if (!text) { alert("请在文本框中粘贴学生名单！"); return; }
+
+      const names = text.split("\n").map(n => n.trim()).filter(n => n.length > 0);
+      if (names.length === 0) return;
+
+      if (isReplace) {
+        if (!confirm("警告: 替换模式将清空当前年级所有已有学生和成绩记录！确认继续？")) return;
+        gradeDataStore[currentGrade] = [];
+      }
+
+      names.forEach((name, i) => {
+        gradeDataStore[currentGrade].push({
+          id: "STU_" + Date.now() + "_" + i,
+          name: name,
+          evaluations: {}
+        });
+      });
+
+      saveCurrentGradeData();
+      textarea.value = "";
+      renderTransitTable();
+      renderSettingStudentList();
+      showToast(`已成功导入 ${names.length} 名学生名单`);
+    }
+
+    /****************************************************************
+     * 5. DATA ANALYTICS & UNIT-SPECIFIC INTERVENTION TAB
+     ****************************************************************/
+    function renderAnalyticsPage() {
+      const selectedScope = document.getElementById("analytics-unit-select").value;
+      const students = gradeDataStore[currentGrade] || [];
+      const units = CURRICULUM_DATA[currentSubject][currentGrade].units;
+
+      const badge = document.getElementById("analytics-scope-badge");
+
+      if (selectedScope === "ALL") {
+        badge.innerText = "当前视图：全学期所有单元综合汇总数据";
+        renderOverallAnalytics(students, units);
+      } else {
+        const unitObj = units.find(u => u.id === selectedScope);
+        badge.innerText = `当前视图：${unitObj ? unitObj.name : '指定单元'}`;
+        renderUnitSpecificAnalytics(students, unitObj);
+      }
+    }
+
+    function renderOverallAnalytics(students, units) {
+      let tpCounts = { TP1: 0, TP2: 0, TP3: 0, TP4: 0, TP5: 0, TP6: 0 };
+      let totalTpSum = 0;
+      let evaluatedCount = 0;
+
+      students.forEach(s => {
+        units.forEach(u => {
+          const tp = s.evaluations[u.id]?.tp;
+          if (tp && tpCounts[tp] !== undefined) {
+            tpCounts[tp]++;
+            totalTpSum += parseInt(tp.replace("TP", ""));
+            evaluatedCount++;
+          }
+        });
+      });
+
+      const passCount = tpCounts.TP3 + tpCounts.TP4 + tpCounts.TP5 + tpCounts.TP6;
+      const needHelpCount = tpCounts.TP1 + tpCounts.TP2;
+      const passRate = evaluatedCount > 0 ? Math.round((passCount / evaluatedCount) * 100) : 0;
+      const avgTP = evaluatedCount > 0 ? (totalTpSum / evaluatedCount).toFixed(1) : "0.0";
+
+      document.getElementById("kpi-total-students").innerText = students.length;
+      document.getElementById("kpi-pass-rate").innerText = passRate + "%";
+      document.getElementById("kpi-need-help").innerText = needHelpCount + " 人次";
+      document.getElementById("kpi-avg-tp").innerText = "TP " + avgTP;
+
+      document.getElementById("chart-1-title").innerHTML = `<i class="fa-solid fa-chart-column text-indigo-600"></i> 全学期 TP 等级总体分布图`;
+      document.getElementById("chart-2-title").innerHTML = `<i class="fa-solid fa-chart-bar text-emerald-600"></i> 各单元平均 TP 掌握度对比`;
+
+      renderTpDistributionChart(tpCounts);
+      renderUnitComparisonChart(students, units);
+
+      renderInterventionAdviceByTopic("全学期综合");
+      renderInterventionTable(students, units, "ALL");
+    }
+
+    function renderUnitSpecificAnalytics(students, unitObj) {
+      if (!unitObj) return;
+
+      let tpCounts = { TP1: 0, TP2: 0, TP3: 0, TP4: 0, TP5: 0, TP6: 0 };
+      let totalTpSum = 0;
+      let evaluatedCount = 0;
+
+      let spMasteredCounts = {};
+      unitObj.sp.forEach(sp => spMasteredCounts[sp] = 0);
+
+      students.forEach(s => {
+        const evalData = s.evaluations[unitObj.id];
+        if (evalData) {
+          const tp = evalData.tp;
+          if (tp && tpCounts[tp] !== undefined) {
+            tpCounts[tp]++;
+            totalTpSum += parseInt(tp.replace("TP", ""));
+            evaluatedCount++;
+          }
+          unitObj.sp.forEach(sp => {
+            if (evalData.sp[sp]) spMasteredCounts[sp]++;
+          });
+        }
+      });
+
+      const passCount = tpCounts.TP3 + tpCounts.TP4 + tpCounts.TP5 + tpCounts.TP6;
+      const needHelpCount = tpCounts.TP1 + tpCounts.TP2;
+      const passRate = evaluatedCount > 0 ? Math.round((passCount / evaluatedCount) * 100) : 0;
+      const avgTP = evaluatedCount > 0 ? (totalTpSum / evaluatedCount).toFixed(1) : "0.0";
+
+      document.getElementById("kpi-total-students").innerText = students.length;
+      document.getElementById("kpi-pass-rate").innerText = passRate + "%";
+      document.getElementById("kpi-need-help").innerText = needHelpCount + " 人";
+      document.getElementById("kpi-avg-tp").innerText = "TP " + avgTP;
+
+      document.getElementById("chart-1-title").innerHTML = `<i class="fa-solid fa-chart-column text-indigo-600"></i> 【${unitObj.name}】TP 级别分布`;
+      document.getElementById("chart-2-title").innerHTML = `<i class="fa-solid fa-chart-line text-emerald-600"></i> 【${unitObj.name}】各 SP (学习标准) 全班掌握率 (%)`;
+
+      renderTpDistributionChart(tpCounts);
+      renderSpMasteryChart(unitObj.sp, spMasteredCounts, students.length);
+
+      renderInterventionAdviceByTopic(unitObj.name);
+      renderInterventionTable(students, [unitObj], unitObj.id);
+    }
+
+    function renderTpDistributionChart(tpCounts) {
+      const ctx = document.getElementById("chart-tp-distribution").getContext("2d");
+      if (tpChartInstance) tpChartInstance.destroy();
+
+      tpChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['TP 1', 'TP 2', 'TP 3', 'TP 4', 'TP 5', 'TP 6'],
+          datasets: [{
+            label: '评估人数/人次',
+            data: [tpCounts.TP1, tpCounts.TP2, tpCounts.TP3, tpCounts.TP4, tpCounts.TP5, tpCounts.TP6],
+            backgroundColor: ['#fecaca', '#fed7aa', '#fef08a', '#bbf7d0', '#bfdbfe', '#e9d5ff'],
+            borderColor: ['#dc2626', '#ea580c', '#ca8a04', '#16a34a', '#2563eb', '#9333ea'],
+            borderWidth: 1.5,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+      });
+    }
+
+    function renderUnitComparisonChart(students, units) {
+      const ctx = document.getElementById("chart-unit-comparison").getContext("2d");
+      if (unitChartInstance) unitChartInstance.destroy();
+
+      const labels = units.map(u => u.name.split(" ")[0]);
+      const avgData = units.map(u => {
+        let sum = 0, count = 0;
+        students.forEach(s => {
+          const tp = s.evaluations[u.id]?.tp;
+          if (tp) {
+            sum += parseInt(tp.replace("TP", ""));
+            count++;
+          }
+        });
+        return count > 0 ? (sum / count).toFixed(2) : 0;
+      });
+
+      unitChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '单元平均 TP',
+            data: avgData,
+            borderColor: '#4f46e5',
+            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 5,
+            pointBackgroundColor: '#4f46e5'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { min: 1, max: 6, ticks: { stepSize: 1 } } }
+        }
+      });
+    }
+
+    function renderSpMasteryChart(spList, spMasteredCounts, totalStudents) {
+      const ctx = document.getElementById("chart-unit-comparison").getContext("2d");
+      if (unitChartInstance) unitChartInstance.destroy();
+
+      const percentages = spList.map(sp => {
+        const count = spMasteredCounts[sp] || 0;
+        return totalStudents > 0 ? Math.round((count / totalStudents) * 100) : 0;
+      });
+
+      unitChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: spList,
+          datasets: [{
+            label: 'SP 掌握率 (%)',
+            data: percentages,
+            backgroundColor: percentages.map(p => p < 50 ? 'rgba(239, 68, 68, 0.8)' : 'rgba(16, 185, 129, 0.8)'),
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } }
+        }
+      });
+    }
+
+    function renderInterventionAdviceByTopic(unitTitle) {
+      const container = document.getElementById("intervention-advice-box");
+      container.innerHTML = "";
+
+      let matchedKey = "技能";
+      if (unitTitle.includes("整数")) matchedKey = "整数";
+      else if (unitTitle.includes("运算")) matchedKey = "运算";
+      else if (unitTitle.includes("分数")) matchedKey = "分数";
+      else if (unitTitle.includes("人类")) matchedKey = "人类";
+      else if (unitTitle.includes("动物") || unitTitle.includes("微生物")) matchedKey = "动物";
+      else if (unitTitle.includes("植物")) matchedKey = "植物";
+      else if (unitTitle.includes("光")) matchedKey = "光";
+      else if (unitTitle.includes("电")) matchedKey = "电";
+      else if (unitTitle.includes("地球") || unitTitle.includes("太阳") || unitTitle.includes("月")) matchedKey = "地球";
+
+      const templates = UNIT_INTERVENTION_TEMPLATES[matchedKey] || UNIT_INTERVENTION_TEMPLATES["技能"];
+
+      templates.forEach(tpl => {
+        const div = document.createElement("div");
+        div.className = "p-3 sm:p-4 bg-indigo-50/60 border border-indigo-100 rounded-xl space-y-1";
+        div.innerHTML = `
+          <h5 class="font-bold text-xs sm:text-sm text-indigo-900 flex items-center gap-1.5">
+            <i class="fa-solid ${tpl.icon} text-indigo-600"></i> ${tpl.title}
+          </h5>
+          <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed">${tpl.text}</p>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function renderInterventionTable(students, units, scopeUnitId) {
+      const tbody = document.getElementById("intervention-students-body");
+      tbody.innerHTML = "";
+
+      let count = 0;
+      students.forEach(s => {
+        units.forEach(u => {
+          if (scopeUnitId !== "ALL" && u.id !== scopeUnitId) return;
+
+          const tp = s.evaluations[u.id]?.tp;
+          if (tp === "TP1" || tp === "TP2" || tp === "TP3") {
+            count++;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td class="p-2 sm:p-2.5 font-semibold text-slate-800">${s.name}</td>
+              <td class="p-2 sm:p-2.5 text-slate-600">${u.name}</td>
+              <td class="p-2 sm:p-2.5"><span class="px-1.5 py-0.5 text-[10px] sm:text-xs font-bold rounded ${getTPClass(tp)}">${tp}</span></td>
+              <td class="p-2 sm:p-2.5 text-slate-600">根据上方模块采取具象教具、针对性练习或伴学结对策略</td>
+              <td class="p-2 sm:p-2.5"><span class="text-amber-600 font-medium whitespace-nowrap"><i class="fa-solid fa-clock-rotate-left"></i> 追踪中</span></td>
+            `;
+            tbody.appendChild(tr);
+          }
+        });
+      });
+
+      if (count === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">目前暂无需要额外辅导的学生 (所选范围内所有人均达 TP4 及以上)</td></tr>`;
+      }
+    }
+
+    /****************************************************************
+     * 6. INDEPENDENT POPUP WINDOW PRINTING SYSTEM
+     ****************************************************************/
+    function openPopupPrintTransit() {
+      const unitId = document.getElementById("unit-select").value;
+      const unitObj = CURRICULUM_DATA[currentSubject][currentGrade].units.find(u => u.id === unitId);
+      const students = gradeDataStore[currentGrade] || [];
+
+      const currentTeacher = getTeacherName(currentGrade);
+      const currentClass = getClassName(currentGrade);
+      const subLabel = currentSubject === "math" ? "数学 (MATEMATIK)" : "科学 (SAINS)";
+
+      const popup = window.open('', '_blank', 'width=1100,height=800');
+      if (!popup) { alert("打印弹窗被浏览器拦截，请允许弹出窗口许可！"); return; }
+
+      const logoHtml = appSettings.logoBase64 ? `<img src="${appSettings.logoBase64}" style="height:60px; vertical-align:middle; margin-right:15px;"/>` : '';
+
+      popup.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Borang Transit PBD - ${unitObj.name}</title>
+          <style>
+            @page { size: A4 landscape; margin: 10mm; }
+            body { font-family: sans-serif; font-size: 11px; margin: 10px; color: #1e293b; }
+            .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #0f172a; padding-bottom: 10px; }
+            .header h1 { font-size: 18px; margin: 0; }
+            .header h2 { font-size: 14px; margin: 5px 0 0 0; color: #475569; }
+            .meta { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: bold; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th, td { border: 1px solid #94a3b8; padding: 5px; text-align: center; }
+            th { background-color: #f1f5f9; }
+            .text-left { text-align: left; }
+            .footer { margin-top: 30px; display: flex; justify-content: space-between; }
+            .sig-box { text-align: center; width: 200px; border-top: 1px solid #000; padding-top: 5px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            ${logoHtml}
+            <div style="display:inline-block; vertical-align:middle;">
+              <h1>${appSettings.schoolNameCN} (${appSettings.schoolNameMY})</h1>
+              <h2>BORANG TRANSIT PBD ${subLabel} ${CURRICULUM_DATA[currentSubject][currentGrade].title}</h2>
+            </div>
+          </div>
+
+          <div class="meta">
+            <span>教师姓名 Nama Guru: ${currentTeacher}</span>
+            <span>班级 Kelas: ${currentClass}</span>
+            <span>评估单元 Unit: ${unitObj.name}</span>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th width="30">序</th>
+                <th width="120" class="text-left">学生姓名 Nama</th>
+                ${unitObj.sp.map(sp => `<th>${sp}</th>`).join('')}
+                <th width="60">整体 TP</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${students.map((stu, i) => {
+                const evalData = stu.evaluations[unitId] || { sp: {}, tp: "" };
+                return `
+                  <tr>
+                    <td>${i + 1}</td>
+                    <td class="text-left">${stu.name}</td>${unitObj.sp.map(sp => `<td>${evalData.sp[sp] ? '✓' : ''}</td>`).join('')}
+                    <td><b>${evalData.tp || '-'}</b></td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+
+          <div class="footer">
+            <div class="sig-box">任课教师签名<br>Guru Mata Pelajaran</div>
+            <div class="sig-box">校方确认签名<br>Pengesahan Pentadbir</div>
+          </div>
+
+          <script>
+            window.onload = function() { window.print(); }
+          <\/script>
+        </body>
+        </html>
+      `);
+      popup.document.close();
+    }
+
+    function openPopupPrintSlips() {
+      const students = gradeDataStore[currentGrade] || [];
+      const units = CURRICULUM_DATA[currentSubject][currentGrade].units;
+
+      const currentTeacher = getTeacherName(currentGrade);
+      const currentClass = getClassName(currentGrade);
+
+      const popup = window.open('', '_blank', 'width=900,height=800');
+      if (!popup) { alert("打印弹窗被浏览器拦截，请允许弹出窗口许可！"); return; }
+
+      const logoHtml = appSettings.logoBase64 ? `<img src="${appSettings.logoBase64}" style="height:50px; margin-right:10px; inline-block; vertical-align:middle;"/>` : '';
+
+      popup.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>PBD Progress Slips</title>
+          <style>
+            @page { size: A4 portrait; margin: 15mm; }
+            body { font-family: sans-serif; font-size: 12px; color: #0f172a; margin: 0; }
+            .page-break { page-break-after: always; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 20px; }
+            .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px; }
+            .header h1 { font-size: 16px; margin: 0; }
+            .table-info { width: 100%; margin-bottom: 15px; font-weight: bold; }
+            table.data { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            table.data th, table.data td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
+            table.data th { background-color: #f8fafc; }
+            .footer { margin-top: 40px; display: flex; justify-content: space-between; }
+            .sig-box { text-align: center; width: 180px; border-top: 1px solid #000; padding-top: 5px; }
+          </style>
+        </head>
+        <body>
+          ${students.map(s => `
+            <div class="page-break">
+              <div class="header">
+                ${logoHtml}
+                <div style="display:inline-block; vertical-align:middle;">
+                  <h1>${appSettings.schoolNameCN} (${appSettings.schoolNameMY})</h1>
+                  <p style="margin:3px 0 0 0; font-weight:bold;">个人课堂评估报告单 (PELAPORAN PENTAKSIRAN BILIK DARJAH)</p>
+                </div>
+              </div>
+
+              <table class="table-info">
+                <tr>
+                  <td>学生姓名: <b>${s.name}</b></td>
+                  <td>班级: <b>${currentClass}</b></td>
+                  <td>科目: <b>${CURRICULUM_DATA[currentSubject][currentGrade].title}</b></td>
+                </tr>
+              </table>
+
+              <table class="data">
+                <thead>
+                  <tr>
+                    <th width="40">序号</th>
+                    <th>评估单元 (Unit Curriculum)</th>
+                    <th width="100" style="text-align:center;">掌握级别 (TP)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${units.map((u, idx) => `
+                    <tr>
+                      <td style="text-align:center;">${idx + 1}</td>
+                      <td>${u.name}</td>
+                      <td style="text-align:center; font-weight:bold;">${s.evaluations[u.id]?.tp || '未评估'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+
+              <div class="footer">
+                <div class="sig-box">任课教师 Guru<br>(${currentTeacher})</div>
+                <div class="sig-box">家长/监护人 Ibu Bapa</div>
+              </div>
+            </div>
+          `).join('')}
+
+          <script>
+            window.onload = function() { window.print(); }
+          <\/script>
+        </body>
+        </html>
+      `);
+      popup.document.close();
+    }
+
+    function openPopupPrintIntervention() {
+      const students = gradeDataStore[currentGrade] || [];
+      const units = CURRICULUM_DATA[currentSubject][currentGrade].units;
+
+      const currentTeacher = getTeacherName(currentGrade);
+      const currentClass = getClassName(currentGrade);
+      const subLabel = currentSubject === "math" ? "数学" : "科学";
+
+      const popup = window.open('', '_blank', 'width=900,height=800');
+      if (!popup) return;
+
+      popup.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Intervention Report</title>
+          <style>
+            body { font-family: sans-serif; font-size: 12px; padding: 20px; }
+            h1 { text-align: center; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+            th, td { border: 1px solid #000; padding: 6px; text-align: left; }
+            th { background-color: #f1f5f9; }
+          </style>
+        </head>
+        <body>
+          <h1>${appSettings.schoolNameCN} - ${subLabel}干预辅导计划表 (${CURRICULUM_DATA[currentSubject][currentGrade].title})</h1>
+          <p>班级: ${currentClass} | 教师: ${currentTeacher}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>学生姓名</th>
+                <th>需辅导单元</th>
+                <th>当前 TP</th>
+                <th>推荐辅导方案</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${students.flatMap(s => units.filter(u => ['TP1','TP2','TP3'].includes(s.evaluations[u.id]?.tp)).map(u => `
+                <tr>
+                  <td>${s.name}</td>
+                  <td>${u.name}</td>
+                  <td><b>${s.evaluations[u.id].tp}</b></td>
+                  <td>使用具象教具与针对性卡片进行一对一基础巩固与强化练习</td>
+                </tr>
+              `)).join('')}
+            </tbody>
+          </table>
+          <script>window.onload = function() { window.print(); }<\/script>
+        </body>
+        </html>
+      `);
+      popup.document.close();
+    }
+
+    /****************************************************************
+     * 7. EXPORT & BACKUP RESTORE SYSTEM
+     ****************************************************************/
+    function exportDataCSV() {
+      const students = gradeDataStore[currentGrade] || [];
+      const units = CURRICULUM_DATA[currentSubject][currentGrade].units;
+      const currentClass = getClassName(currentGrade);
+
+      let csv = "\uFEFF序,学生姓名," + units.map(u => `"${u.name}"`).join(",") + "\n";
+
+      students.forEach((s, idx) => {
+        let row = [`${idx + 1}`, `"${s.name}"`];
+        units.forEach(u => {
+          row.push(`"${s.evaluations[u.id]?.tp || ''}"`);
+        });
+        csv += row.join(",") + "\n";
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${currentClass}_PBD_Tahun_${currentGrade}_${currentSubject}_Assessment.csv`;
+      a.click();
+    }
+
+    function exportBackupJSON() {
+      const backupObject = {
+        version: "3.0",
+        exportDate: new Date().toISOString(),
+        settings: appSettings,
+        gradeStore: gradeDataStore,
+        currentSubject: currentSubject
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupObject, null, 2));
+      const a = document.createElement("a");
+      a.href = dataStr;
+      a.download = `PBD_Full_SchoolData_Backup_${Date.now()}.json`;
+      a.click();
+      showToast("备份文件已成功导出！");
+    }
+
+    function importBackupJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const importedData = JSON.parse(e.target.result);
+
+          if (!importedData || (!importedData.settings && !importedData.gradeStore)) {
+            alert("无效的 PBD 备份档案格式！");
+            return;
+          }
+
+          if (confirm("恢复备份将覆盖当前系统中所有年级的数据和班级设置，确定要继续吗？")) {
+            if (importedData.settings) {
+              appSettings = Object.assign({}, appSettings, importedData.settings);
+              localStorage.setItem("pbd_app_settings", JSON.stringify(appSettings));
+            }
+
+            if (importedData.gradeStore) {
+              gradeDataStore = importedData.gradeStore;
+              Object.keys(gradeDataStore).forEach(gradeKey => {
+                localStorage.setItem(`pbd_data_${currentSubject}_grade_${gradeKey}`, JSON.stringify(gradeDataStore[gradeKey]));
+              });
+            }
+
+            loadSettings();
+            loadGradeData(currentSubject, currentGrade);
+            setupUnitDropdown();
+            renderTransitTable();
+            renderSettingStudentList();
+            if (!document.getElementById("tab-content-analytics").classList.contains("hidden")) {
+              renderAnalyticsPage();
+            }
+
+            showToast("成功恢复并加载备份文档所有数据！");
+          }
+        } catch (err) {
+          alert("读取备份文件失败，请确保您上传的是有效的 PBD JSON 备份文件。");
+        } finally {
+          event.target.value = "";
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function switchTab(tab) {
+      document.getElementById("tab-content-transit").classList.add("hidden");
+      document.getElementById("tab-content-analytics").classList.add("hidden");
+      document.getElementById("tab-content-students").classList.add("hidden");
+
+      // Desktop styles
+      document.getElementById("tab-btn-transit").className = "px-4 py-1.5 rounded-lg font-medium transition flex items-center gap-2 text-indigo-200 hover:text-white hover:bg-indigo-800/50";
+      document.getElementById("tab-btn-analytics").className = "px-4 py-1.5 rounded-lg font-medium transition flex items-center gap-2 text-indigo-200 hover:text-white hover:bg-indigo-800/50";
+      document.getElementById("tab-btn-students").className = "px-4 py-1.5 rounded-lg font-medium transition flex items-center gap-2 text-indigo-200 hover:text-white hover:bg-indigo-800/50";
+
+      // Mobile bottom nav styles
+      const mobTransit = document.getElementById("mob-tab-btn-transit");
+      const mobAnalytics = document.getElementById("mob-tab-btn-analytics");
+      const mobStudents = document.getElementById("mob-tab-btn-students");
+
+      if(mobTransit && mobAnalytics && mobStudents) {
+        mobTransit.className = "flex flex-col items-center justify-center w-1/3 py-1 text-slate-500 font-medium transition";
+        mobAnalytics.className = "flex flex-col items-center justify-center w-1/3 py-1 text-slate-500 font-medium transition";
+        mobStudents.className = "flex flex-col items-center justify-center w-1/3 py-1 text-slate-500 font-medium transition";
+      }
+
+      if (tab === 'transit') {
+        document.getElementById("tab-content-transit").classList.remove("hidden");
+        document.getElementById("tab-btn-transit").className = "px-4 py-1.5 rounded-lg font-medium transition flex items-center gap-2 bg-indigo-600 text-white shadow";
+        if(mobTransit) mobTransit.className = "flex flex-col items-center justify-center w-1/3 py-1 text-indigo-600 font-bold transition";
+        renderTransitTable();
+      } else if (tab === 'analytics') {
+        document.getElementById("tab-content-analytics").classList.remove("hidden");
+        document.getElementById("tab-btn-analytics").className = "px-4 py-1.5 rounded-lg font-medium transition flex items-center gap-2 bg-indigo-600 text-white shadow";
+        if(mobAnalytics) mobAnalytics.className = "flex flex-col items-center justify-center w-1/3 py-1 text-indigo-600 font-bold transition";
+        renderAnalyticsPage();
+      } else if (tab === 'students') {
+        document.getElementById("tab-content-students").classList.remove("hidden");
+        document.getElementById("tab-btn-students").className = "px-4 py-1.5 rounded-lg font-medium transition flex items-center gap-2 bg-indigo-600 text-white shadow";
+        if(mobStudents) mobStudents.className = "flex flex-col items-center justify-center w-1/3 py-1 text-indigo-600 font-bold transition";
+        refreshGradeSettingInputs();
+        renderSettingStudentList();
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById("toast-notification");
+      document.getElementById("toast-message").innerText = msg;
+      toast.classList.remove("translate-y-20", "opacity-0");
+      setTimeout(() => {
+        toast.classList.add("translate-y-20", "opacity-0");
+      }, 3000);
+    }
+
+    window.onload = initApp;
+  </script>
+</body>
+</html>
