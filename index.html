@@ -378,23 +378,23 @@
       <div class="bg-white rounded-xl sm:rounded-2xl border border-indigo-200 shadow-sm p-4 sm:p-6 space-y-4 bg-indigo-50/20">
         <div class="flex items-center justify-between border-b border-indigo-100 pb-3">
           <h3 class="text-sm sm:text-base font-bold text-indigo-900 flex items-center gap-2">
-            <i class="fa-solid fa-chalkboard-user text-indigo-600"></i> 当前 <span id="current-grade-label-title" class="underline text-indigo-700">3 年级</span> 班级与教师设置
+            <i class="fa-solid fa-chalkboard-user text-indigo-600"></i> 当前 <span id="current-grade-label-title" class="underline text-indigo-700">3 年级</span> <span id="current-subject-label-title" class="text-indigo-600">(科学)</span> 班级与教师设置
           </h3>
-          <span class="text-[10px] sm:text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-semibold">独立保存</span>
+          <span class="text-[10px] sm:text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-semibold">按科目独立保存</span>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">任课教师姓名 (Nama Guru)</label>
-            <input type="text" id="setting-teacher-name" value="LEE KIAT CHEW" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
+            <input type="text" id="setting-teacher-name" value="" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">班级名称 (Kelas)</label>
-            <input type="text" id="setting-class-name" value="3M" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
+            <input type="text" id="setting-class-name" value="" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
           </div>
           <div>
             <button onclick="saveGradeClassSettings()" class="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs sm:text-sm font-bold shadow-sm transition flex items-center justify-center gap-2">
-              <i class="fa-solid fa-floppy-disk"></i> 保存当前年级班级设置
+              <i class="fa-solid fa-floppy-disk"></i> 保存当前科目/年级设置
             </button>
           </div>
         </div>
@@ -455,7 +455,7 @@
 
       <div class="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="p-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-          <h3 class="text-xs sm:text-base font-bold text-slate-800">当前年级学生名单 (<span id="setting-student-count">28</span> 人)</h3>
+          <h3 class="text-xs sm:text-base font-bold text-slate-800">当前年级学生名单 (<span id="setting-student-count">0</span> 人)</h3>
           <button onclick="deleteBatchStudents()" class="px-2.5 py-1 bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-semibold rounded-lg transition flex items-center gap-1">
             <i class="fa-solid fa-trash-can"></i> 删除选中学生
           </button>
@@ -725,17 +725,29 @@
     let tpChartInstance = null;
     let unitChartInstance = null;
 
+    // 关键修复：gradeInfo 改为按 科目 → 年级 两级独立存储
+    // gradeInfo[subject][grade] = { teacherName, className }
     let appSettings = {
       schoolNameCN: "晏斗中华国民型华文小学",
       schoolNameMY: "SJK(C) CHUNG HUA RANTAU",
       logoBase64: "",
       gradeInfo: {
-        "1": { teacherName: "卢老师", className: "1M" },
-        "2": { teacherName: "陈老师", className: "2M" },
-        "3": { teacherName: "李老师", className: "3M" },
-        "4": { teacherName: "张老师", className: "4M" },
-        "5": { teacherName: "林老师", className: "5M" },
-        "6": { teacherName: "黄老师", className: "6M" }
+        science: {
+          "1": { teacherName: "卢老师", className: "1M" },
+          "2": { teacherName: "陈老师", className: "2M" },
+          "3": { teacherName: "李老师", className: "3M" },
+          "4": { teacherName: "张老师", className: "4M" },
+          "5": { teacherName: "林老师", className: "5M" },
+          "6": { teacherName: "黄老师", className: "6M" }
+        },
+        math: {
+          "1": { teacherName: "卢老师", className: "1M" },
+          "2": { teacherName: "陈老师", className: "2M" },
+          "3": { teacherName: "李老师", className: "3M" },
+          "4": { teacherName: "张老师", className: "4M" },
+          "5": { teacherName: "林老师", className: "5M" },
+          "6": { teacherName: "黄老师", className: "6M" }
+        }
       }
     };
 
@@ -759,7 +771,39 @@
           appSettings.logoBase64 = parsed.logoBase64 || "";
           
           if (parsed.gradeInfo) {
-            appSettings.gradeInfo = Object.assign({}, appSettings.gradeInfo, parsed.gradeInfo);
+            // 旧格式迁移：parsed.gradeInfo["1"] = {teacherName, className}
+            // 新格式：parsed.gradeInfo["science"]["1"] = {...}
+            const firstKey = Object.keys(parsed.gradeInfo)[0];
+            const isOldFormat = firstKey && parsed.gradeInfo[firstKey] 
+              && (parsed.gradeInfo[firstKey].teacherName !== undefined || parsed.gradeInfo[firstKey].className !== undefined);
+            
+            if (isOldFormat) {
+              // 把旧的扁平年级设置迁移到 science（默认科目）下
+              Object.keys(parsed.gradeInfo).forEach(g => {
+                appSettings.gradeInfo.science[g] = Object.assign(
+                  {}, 
+                  appSettings.gradeInfo.science[g] || {}, 
+                  parsed.gradeInfo[g]
+                );
+              });
+              localStorage.setItem("pbd_app_settings", JSON.stringify(appSettings));
+            } else {
+              // 新格式，直接合并
+              if (parsed.gradeInfo.science) {
+                Object.keys(parsed.gradeInfo.science).forEach(g => {
+                  appSettings.gradeInfo.science[g] = Object.assign(
+                    {}, appSettings.gradeInfo.science[g] || {}, parsed.gradeInfo.science[g]
+                  );
+                });
+              }
+              if (parsed.gradeInfo.math) {
+                Object.keys(parsed.gradeInfo.math).forEach(g => {
+                  appSettings.gradeInfo.math[g] = Object.assign(
+                    {}, appSettings.gradeInfo.math[g] || {}, parsed.gradeInfo.math[g]
+                  );
+                });
+              }
+            }
           }
         } catch(e){}
       }
@@ -771,34 +815,48 @@
       updateHeaderAndLogoUI();
     }
 
-    function getTeacherName(grade) {
-      return (appSettings.gradeInfo[grade] && appSettings.gradeInfo[grade].teacherName) ? appSettings.gradeInfo[grade].teacherName : "未设置老师";
+    function getGradeInfo(subject, grade) {
+      if (!appSettings.gradeInfo[subject]) appSettings.gradeInfo[subject] = {};
+      if (!appSettings.gradeInfo[subject][grade]) {
+        appSettings.gradeInfo[subject][grade] = { teacherName: "", className: grade + "M" };
+      }
+      return appSettings.gradeInfo[subject][grade];
     }
 
-    function getClassName(grade) {
-      return (appSettings.gradeInfo[grade] && appSettings.gradeInfo[grade].className) ? appSettings.gradeInfo[grade].className : (grade + "M");
+    function getTeacherName(grade, subject) {
+      const subj = subject || currentSubject;
+      const info = getGradeInfo(subj, grade);
+      return info.teacherName || "未设置老师";
+    }
+
+    function getClassName(grade, subject) {
+      const subj = subject || currentSubject;
+      const info = getGradeInfo(subj, grade);
+      return info.className || (grade + "M");
     }
 
     function refreshGradeSettingInputs() {
       document.getElementById("setting-teacher-name").value = getTeacherName(currentGrade);
       document.getElementById("setting-class-name").value = getClassName(currentGrade);
       document.getElementById("current-grade-label-title").innerText = `${currentGrade} 年级`;
+      const subLabelEl = document.getElementById("current-subject-label-title");
+      if (subLabelEl) subLabelEl.innerText = currentSubject === "math" ? "(数学)" : "(科学)";
     }
 
     function saveGradeClassSettings() {
       const teacher = document.getElementById("setting-teacher-name").value.trim();
       const cls = document.getElementById("setting-class-name").value.trim();
 
-      if (!appSettings.gradeInfo[currentGrade]) {
-        appSettings.gradeInfo[currentGrade] = {};
-      }
-
-      appSettings.gradeInfo[currentGrade].teacherName = teacher;
-      appSettings.gradeInfo[currentGrade].className = cls;
+      // 存入当前科目 + 当前年级
+      appSettings.gradeInfo[currentSubject][currentGrade] = {
+        teacherName: teacher,
+        className: cls
+      };
 
       localStorage.setItem("pbd_app_settings", JSON.stringify(appSettings));
       updateHeaderAndLogoUI();
-      showToast(`已成功保存 ${currentGrade} 年级的老师（${teacher}）和班级（${cls}）！`);
+      const subLabel = currentSubject === "math" ? "数学" : "科学";
+      showToast(`已成功保存 ${subLabel} ${currentGrade} 年级的老师（${teacher}）和班级（${cls}）！`);
     }
 
     function saveSchoolSettings() {
@@ -811,8 +869,8 @@
     }
 
     function updateHeaderAndLogoUI() {
-      const currentTeacher = getTeacherName(currentGrade);
-      const currentClass = getClassName(currentGrade);
+      const currentTeacher = getTeacherName(currentGrade, currentSubject);
+      const currentClass = getClassName(currentGrade, currentSubject);
       const subLabel = currentSubject === "math" ? "数学" : "科学";
 
       document.getElementById("nav-school-name").innerText = `${appSettings.schoolNameMY} ${subLabel} PBD 评估系统`;
@@ -886,6 +944,7 @@
       selectedStudentIds.clear();
       loadGradeData(currentSubject, currentGrade);
       updateHeaderAndLogoUI();
+      refreshGradeSettingInputs();   // 切换科目后刷新老师/班级输入框
       setupUnitDropdown();
       renderTransitTable();
       renderSettingStudentList();
@@ -1529,8 +1588,8 @@
       const unitObj = CURRICULUM_DATA[currentSubject][currentGrade].units.find(u => u.id === unitId);
       const students = gradeDataStore[currentGrade] || [];
 
-      const currentTeacher = getTeacherName(currentGrade);
-      const currentClass = getClassName(currentGrade);
+      const currentTeacher = getTeacherName(currentGrade, currentSubject);
+      const currentClass = getClassName(currentGrade, currentSubject);
       const subLabel = currentSubject === "math" ? "数学 (MATEMATIK)" : "科学 (SAINS)";
 
       const popup = window.open('', '_blank', 'width=1100,height=800');
@@ -1614,8 +1673,8 @@
       const students = gradeDataStore[currentGrade] || [];
       const units = CURRICULUM_DATA[currentSubject][currentGrade].units;
 
-      const currentTeacher = getTeacherName(currentGrade);
-      const currentClass = getClassName(currentGrade);
+      const currentTeacher = getTeacherName(currentGrade, currentSubject);
+      const currentClass = getClassName(currentGrade, currentSubject);
 
       const popup = window.open('', '_blank', 'width=900,height=800');
       if (!popup) { alert("打印弹窗被浏览器拦截，请允许弹出窗口许可！"); return; }
@@ -1699,8 +1758,8 @@
       const students = gradeDataStore[currentGrade] || [];
       const units = CURRICULUM_DATA[currentSubject][currentGrade].units;
 
-      const currentTeacher = getTeacherName(currentGrade);
-      const currentClass = getClassName(currentGrade);
+      const currentTeacher = getTeacherName(currentGrade, currentSubject);
+      const currentClass = getClassName(currentGrade, currentSubject);
       const subLabel = currentSubject === "math" ? "数学" : "科学";
 
       const popup = window.open('', '_blank', 'width=900,height=800');
@@ -1755,7 +1814,7 @@
     function exportDataCSV() {
       const students = gradeDataStore[currentGrade] || [];
       const units = CURRICULUM_DATA[currentSubject][currentGrade].units;
-      const currentClass = getClassName(currentGrade);
+      const currentClass = getClassName(currentGrade, currentSubject);
 
       let csv = "\uFEFF序,学生姓名," + units.map(u => `"${u.name}"`).join(",") + "\n";
 
@@ -1777,7 +1836,7 @@
 
     function exportBackupJSON() {
       const backupObject = {
-        version: "3.0",
+        version: "3.1",
         exportDate: new Date().toISOString(),
         settings: appSettings,
         gradeStore: gradeDataStore,
@@ -1809,6 +1868,9 @@
           if (confirm("恢复备份将覆盖当前系统中所有年级的数据和班级设置，确定要继续吗？")) {
             if (importedData.settings) {
               appSettings = Object.assign({}, appSettings, importedData.settings);
+              // 确保新结构存在
+              if (!appSettings.gradeInfo.science) appSettings.gradeInfo.science = {};
+              if (!appSettings.gradeInfo.math) appSettings.gradeInfo.math = {};
               localStorage.setItem("pbd_app_settings", JSON.stringify(appSettings));
             }
 
